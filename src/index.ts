@@ -247,7 +247,15 @@ class N8NWorkflowServer {
             name: 'list_workflows',
             enabled: true,
             description: 'List all workflows from n8n',
-            inputSchema: { type: 'object', properties: {} }
+            inputSchema: { 
+              type: 'object', 
+              properties: {
+                random_string: {
+                  type: 'string',
+                  description: 'Dummy parameter for no-parameter tools'
+                }
+              }
+            }
           },
           {
             name: 'create_workflow',
@@ -256,28 +264,56 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                name: { type: 'string' },
+                name: { 
+                  type: 'string',
+                  description: 'The name of the workflow to create'
+                },
                 nodes: {
                   type: 'array',
+                  description: 'Array of workflow nodes to create. Each node must have type and name.',
                   items: {
                     type: 'object',
                     properties: {
-                      type: { type: 'string' },
-                      name: { type: 'string' },
-                      parameters: { type: 'object' }
+                      type: { 
+                        type: 'string',
+                        description: 'The node type (e.g. "n8n-nodes-base.code", "n8n-nodes-base.httpRequest")'
+                      },
+                      name: { 
+                        type: 'string',
+                        description: 'The display name of the node'
+                      },
+                      parameters: { 
+                        type: 'object',
+                        description: 'Node-specific configuration parameters'
+                      }
                     },
                     required: ['type', 'name']
                   }
                 },
                 connections: {
                   type: 'array',
+                  description: 'Array of connections between nodes. Each connection defines how data flows from source to target node.',
                   items: {
                     type: 'object',
                     properties: {
-                      source: { type: 'string' },
-                      target: { type: 'string' },
-                      sourceOutput: { type: 'number', default: 0 },
-                      targetInput: { type: 'number', default: 0 }
+                      source: { 
+                        type: 'string',
+                        description: 'The source node name or ID'
+                      },
+                      target: { 
+                        type: 'string',
+                        description: 'The target node name or ID'
+                      },
+                      sourceOutput: { 
+                        type: 'number', 
+                        default: 0,
+                        description: 'Output index from the source node (default: 0)'
+                      },
+                      targetInput: { 
+                        type: 'number', 
+                        default: 0,
+                        description: 'Input index of the target node (default: 0)'
+                      }
                     },
                     required: ['source', 'target']
                   }
@@ -292,7 +328,12 @@ class N8NWorkflowServer {
             description: 'Get a workflow by ID',
             inputSchema: {
               type: 'object',
-              properties: { id: { type: 'string' } },
+              properties: { 
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to retrieve'
+                }
+              },
               required: ['id']
             }
           },
@@ -303,10 +344,22 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                nodes: { type: 'array' },
-                connections: { type: 'array' }
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to update'
+                },
+                name: { 
+                  type: 'string',
+                  description: 'The new name for the workflow'
+                },
+                nodes: { 
+                  type: 'array',
+                  description: 'Array of workflow nodes. See create_workflow for detailed structure.'
+                },
+                connections: { 
+                  type: 'array',
+                  description: 'Array of node connections. See create_workflow for detailed structure.'
+                }
               },
               required: ['id', 'name', 'nodes']
             }
@@ -317,7 +370,12 @@ class N8NWorkflowServer {
             description: 'Delete a workflow by ID',
             inputSchema: {
               type: 'object',
-              properties: { id: { type: 'string' } },
+              properties: { 
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to delete'
+                }
+              },
               required: ['id']
             }
           },
@@ -327,7 +385,12 @@ class N8NWorkflowServer {
             description: 'Activate a workflow by ID',
             inputSchema: {
               type: 'object',
-              properties: { id: { type: 'string' } },
+              properties: { 
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to activate'
+                }
+              },
               required: ['id']
             }
           },
@@ -337,7 +400,12 @@ class N8NWorkflowServer {
             description: 'Deactivate a workflow by ID',
             inputSchema: {
               type: 'object',
-              properties: { id: { type: 'string' } },
+              properties: { 
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to deactivate'
+                }
+              },
               required: ['id']
             }
           },
@@ -350,15 +418,31 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                includeData: { type: 'boolean' },
+                includeData: { 
+                  type: 'boolean',
+                  description: 'Whether to include execution data in the response'
+                },
                 status: { 
                   type: 'string',
-                  enum: ['error', 'success', 'waiting']
+                  enum: ['error', 'success', 'waiting'],
+                  description: 'Filter executions by status (error, success, or waiting)'
                 },
-                workflowId: { type: 'string' },
-                projectId: { type: 'string' },
-                limit: { type: 'number' },
-                cursor: { type: 'string' }
+                workflowId: { 
+                  type: 'string',
+                  description: 'Filter executions by workflow ID'
+                },
+                projectId: { 
+                  type: 'string',
+                  description: 'Filter executions by project ID'
+                },
+                limit: { 
+                  type: 'number',
+                  description: 'Maximum number of executions to return'
+                },
+                cursor: { 
+                  type: 'string',
+                  description: 'Cursor for pagination'
+                }
               }
             }
           },
@@ -369,8 +453,14 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                id: { type: 'number' },
-                includeData: { type: 'boolean' }
+                id: { 
+                  type: 'number',
+                  description: 'The ID of the execution to retrieve'
+                },
+                includeData: { 
+                  type: 'boolean',
+                  description: 'Whether to include execution data in the response'
+                }
               },
               required: ['id']
             }
@@ -382,7 +472,10 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                id: { type: 'number' }
+                id: { 
+                  type: 'number',
+                  description: 'The ID of the execution to delete'
+                }
               },
               required: ['id']
             }

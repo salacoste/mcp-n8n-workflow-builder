@@ -12,7 +12,7 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 
 - Node.js (v14+ recommended)
 - npm
-- n8n instance with API access
+- n8n instance with API access (tested and compatible with n8n version 1.82.3)
 - Claude App or Cursor IDE for AI interaction
 
 ## Installation Guide
@@ -132,6 +132,8 @@ The following tools are available through the MCP protocol:
 - **get_execution**: Gets details of a specific execution by its ID.
 - **delete_execution**: Deletes an execution record by its ID.
 
+All tools have been tested and optimized for n8n version 1.82.3. The node types and API structures used are compatible with this version.
+
 ### MCP Resources
 
 The server provides the following resources for more efficient context access:
@@ -190,6 +192,15 @@ node test-workflow.js
 - Check that your environment variables in `.env` and `cline_mcp_settings.json` are set correctly.
 - If you have problems with Claude integration, check the location of the `cline_mcp_settings.json` file.
 - For debugging, run with the `--json-rpc` flag and use curl to send test requests to port 3000.
+
+## Version Compatibility
+
+This MCP server has been specifically tested and validated with:
+- **n8n version**: 1.82.3
+- **Node.js**: v14 and above
+- **MCP Protocol**: Latest version compatible with Claude and Cursor
+
+If you're using a different version of n8n, some API endpoints or node types may differ. Please report any compatibility issues in the GitHub repository.
 
 ## License
 
