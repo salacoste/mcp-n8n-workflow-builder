@@ -1,15 +1,19 @@
 # n8n Workflow Builder MCP Server
 
-This project provides an MCP server for managing n8n workflows. It allows you to create, update, delete, activate, and deactivate workflows through a set of tools available in the Claude App.
+This project provides an MCP (Model Context Protocol) server for managing n8n workflows. It allows you to create, update, delete, activate, and deactivate workflows through a set of tools available in Claude AI and Cursor IDE.
 
-**Important:**  
-This version only supports **npm** for package management and server execution.
+**Key Features:**
+- Full integration with Claude AI and Cursor IDE via MCP protocol
+- Create and manage n8n workflows via natural language
+- Predefined workflow templates through prompts system
+- Interactive workflow building with real-time feedback
 
 ## Requirements
 
 - Node.js (v14+ recommended)
 - npm
-- Claude App for integration capabilities
+- n8n instance with API access
+- Claude App or Cursor IDE for AI interaction
 
 ## Installation Guide
 
@@ -18,13 +22,13 @@ This version only supports **npm** for package management and server execution.
 Clone the repository from GitHub:
 
 ```bash
-git clone https://github.com/salacoste/n8n-workflow-builder.git
+git clone https://github.com/salacoste/mcp-n8n-workflow-builder.git
 ```
 
 Then navigate to the project directory:
 
 ```bash
-cd n8n-workflow-builder
+cd mcp-n8n-workflow-builder
 ```
 
 ### 2. Install Dependencies
@@ -54,13 +58,19 @@ Use the following commands to build and run the project:
   npm run build
   ```
 
-- **Start the MCP Server:**
+- **Start the MCP Server in standalone mode:**
   
   ```bash
   npm start
   ```
 
-The server will start and accept requests via stdio.
+- **Start with JSON-RPC mode for testing:**
+  
+  ```bash
+  npm run start -- --json-rpc
+  ```
+
+The server will start and accept requests via stdio or JSON-RPC depending on the mode.
 
 ### 5. Claude App Integration
 
@@ -102,11 +112,11 @@ Then edit the file, providing the correct environment variable values:
 
 **Important:** Do not add `cline_mcp_settings.json` to the repository as it contains your personal access credentials.
 
-## Available Tools
+## Available Tools and Features
 
 ### MCP Tools
 
-The following tools are defined in the server and can be accessed through Claude App:
+The following tools are available through the MCP protocol:
 
 #### Workflow Management
 - **list_workflows**: Displays a list of all workflows from n8n.
@@ -124,7 +134,7 @@ The following tools are defined in the server and can be accessed through Claude
 
 ### MCP Resources
 
-The server also provides the following resources for more efficient context access:
+The server provides the following resources for more efficient context access:
 
 #### Static Resources
 - **/workflows**: List of all available workflows in the n8n instance
@@ -134,6 +144,18 @@ The server also provides the following resources for more efficient context acce
 - **/workflows/{id}**: Detailed information about a specific workflow
 - **/executions/{id}**: Detailed information about a specific execution
 
+### MCP Prompts
+
+The server offers predefined workflow templates through the prompts system:
+
+#### Available Prompts
+- **Schedule Triggered Workflow**: Create a workflow that runs on a schedule
+- **HTTP Webhook Workflow**: Create a workflow that responds to HTTP webhook requests
+- **Data Transformation Workflow**: Create a workflow for processing and transforming data
+- **External Service Integration Workflow**: Create a workflow that integrates with external services
+
+Each prompt has variables that can be customized when generating a workflow, such as workflow name, schedule expression, webhook path, and more.
+
 ## Usage Examples
 
 In the `examples` directory, you'll find examples and instructions for setting up and using n8n Workflow Builder with Claude App:
@@ -141,6 +163,22 @@ In the `examples` directory, you'll find examples and instructions for setting u
 1. **setup_with_claude.md** - Step-by-step instructions for setting up integration with Claude App
 2. **workflow_examples.md** - Simple query examples for working with n8n workflows
 3. **complex_workflow.md** - Examples of creating and updating complex workflows
+4. **using_prompts.md** - Guide to using the prompts feature for quick workflow creation
+
+## Testing the Server
+
+You can use the provided test scripts to verify the functionality:
+
+```bash
+# Test basic functionality with Claude
+node test-claude.js
+
+# Test prompts functionality
+node test-prompts.js
+
+# Test workflow creation and management
+node test-workflow.js
+```
 
 ## Troubleshooting
 
@@ -151,6 +189,7 @@ In the `examples` directory, you'll find examples and instructions for setting u
   ```
 - Check that your environment variables in `.env` and `cline_mcp_settings.json` are set correctly.
 - If you have problems with Claude integration, check the location of the `cline_mcp_settings.json` file.
+- For debugging, run with the `--json-rpc` flag and use curl to send test requests to port 3000.
 
 ## License
 
