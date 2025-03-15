@@ -30,7 +30,7 @@ export interface WorkflowSpec {
   tags?: string[];
 }
 
-// Временный интерфейс для поддержки старого формата на входе
+// Temporary interface to support the old input format
 export interface LegacyWorkflowConnection {
   source: string;
   target: string;
@@ -38,7 +38,7 @@ export interface LegacyWorkflowConnection {
   targetInput?: number;
 }
 
-// Интерфейс для входных данных
+// Interface for input data
 export interface WorkflowInput {
   name?: string;
   nodes: {

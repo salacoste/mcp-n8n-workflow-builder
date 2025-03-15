@@ -510,7 +510,7 @@ class N8NWorkflowServer {
               
             case 'create_workflow':
               try {
-                // Обеспечение, что args - это объект
+                // Ensure args is an object
                 const parameters = args || {};
                 
                 this.log('info', 'Create workflow parameters:', JSON.stringify(parameters, null, 2));
@@ -519,20 +519,20 @@ class N8NWorkflowServer {
                   throw new McpError(ErrorCode.InvalidParams, 'Workflow name and nodes are required');
                 }
                 
-                // Создаем входные данные в нужном формате
+                // Create input data in the required format
                 const workflowInput: WorkflowInput = {
                   name: parameters.name,
                   nodes: parameters.nodes as any[]
                 };
                 
-                // Проверка и преобразование узлов
-                workflowInput.nodes.forEach((node, index) => {
+                // Check and transform nodes
+                workflowInput.nodes.forEach((node: any, index: number) => {
                   if (!node.name || !node.type) {
                     throw new McpError(ErrorCode.InvalidParams, `Node at index ${index} is missing name or type`);
                   }
                 });
                 
-                // Приводим соединения к формату LegacyWorkflowConnection[]
+                // Transform connections to LegacyWorkflowConnection[] format
                 if (parameters.connections && Array.isArray(parameters.connections)) {
                   workflowInput.connections = parameters.connections.map((conn: any) => {
                     if (!conn.source || !conn.target) {
@@ -589,13 +589,13 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow nodes are required');
               }
               
-              // Создаем входные данные для обновления в нужном формате
+              // Create input data for updating in the required format
               const updateInput: WorkflowInput = {
                 name: args.name,
                 nodes: args.nodes as any[]
               };
               
-              // Приводим соединения к формату LegacyWorkflowConnection[]
+              // Transform connections to LegacyWorkflowConnection[] format
               if (args.connections && Array.isArray(args.connections)) {
                 updateInput.connections = args.connections.map((conn: any) => ({
                   source: conn.source,
@@ -720,14 +720,14 @@ class N8NWorkflowServer {
   }
 
   private setupPromptHandlers() {
-    // Обработчик метода prompts/list
+    // Handler for prompts/list method
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       this.log('info', 'Listing available prompts');
       
-      // Получаем все доступные промты
+      // Get all available prompts
       const prompts = promptsService.getAllPrompts();
       
-      // Преобразуем их в формат, ожидаемый MCP
+      // Transform them to the format expected by MCP
       const mcpPrompts = prompts.map((prompt: Prompt) => ({
         id: prompt.id,
         name: prompt.name,
@@ -753,17 +753,17 @@ class N8NWorkflowServer {
       };
     });
 
-    // Для prompts/fill добавим обработчик вручную
-    // Обходим проблему с типами, регистрируя обработчик напрямую во внутреннем объекте
+    // For prompts/fill we'll add a handler manually
+    // Working around type issues by registering the handler directly in the internal object
     this.server["_requestHandlers"].set('prompts/fill', async (request: any) => {
       const { promptId, variables } = request.params;
       this.log('info', `Filling prompt "${promptId}" with variables`);
 
       try {
-        // Получаем промт по ID и заполняем его переданными переменными
+        // Get the prompt by ID and fill it with the provided variables
         const workflowData = promptsService.fillPromptTemplate(promptId, variables);
         
-        // Возвращаем результат в формате, ожидаемом MCP
+        // Return the result in the format expected by MCP
         return {
           content: [{
             type: 'text',

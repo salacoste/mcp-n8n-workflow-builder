@@ -14,7 +14,7 @@ export const ReadResourceRequestSchema = MCPReadResourceRequestSchema;
 export const ListResourceTemplatesRequestSchema = MCPListResourceTemplatesRequestSchema;
 export const ListPromptsRequestSchema = MCPListPromptsRequestSchema;
 
-// Определяем свою схему для заполнения промтов, так как в SDK ее нет
+// Define our own schema for filling prompts, as it's not included in the SDK
 export const FillPromptRequestSchema = {
   method: 'prompts/fill',
   params: {

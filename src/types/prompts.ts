@@ -1,5 +1,5 @@
 /**
- * Описание переменной промта
+ * Prompt variable description
  */
 export interface PromptVariable {
   name: string;
@@ -9,8 +9,8 @@ export interface PromptVariable {
 }
 
 /**
- * Объект шаблона для промта
- * Содержит описание рабочего процесса с плейсхолдерами для переменных
+ * Template object for a prompt
+ * Contains workflow description with placeholders for variables
  */
 export interface PromptTemplate {
   name: string;
@@ -19,7 +19,7 @@ export interface PromptTemplate {
 }
 
 /**
- * Промт для создания рабочего процесса
+ * Prompt for creating a workflow
  */
 export interface Prompt {
   id: string;
@@ -30,7 +30,7 @@ export interface Prompt {
 }
 
 /**
- * Результат заполнения промта
+ * Result of filling a prompt template
  */
 export interface FilledPrompt {
   workflowData: any;

@@ -1,6 +1,6 @@
 import { Prompt, PromptVariable } from '../types/prompts';
 
-// Определяем константы для ID промтов
+// Define constants for prompt IDs
 export const PROMPT_IDS = {
   SCHEDULE_WORKFLOW: 'schedule-workflow',
   HTTP_WEBHOOK_WORKFLOW: 'http-webhook-workflow',
@@ -8,7 +8,7 @@ export const PROMPT_IDS = {
   INTEGRATION_WORKFLOW: 'integration-workflow'
 };
 
-// Промт для создания рабочего процесса с триггером по расписанию
+// Prompt for creating a workflow with schedule trigger
 export const scheduleWorkflowPrompt: Prompt = {
   id: PROMPT_IDS.SCHEDULE_WORKFLOW,
   name: 'Schedule Triggered Workflow',
@@ -63,7 +63,7 @@ export const scheduleWorkflowPrompt: Prompt = {
   ]
 };
 
-// Промт для создания рабочего процесса с HTTP вебхуком
+// Prompt for creating a workflow with HTTP webhook
 export const httpWebhookWorkflowPrompt: Prompt = {
   id: PROMPT_IDS.HTTP_WEBHOOK_WORKFLOW,
   name: 'HTTP Webhook Workflow',
@@ -119,7 +119,7 @@ export const httpWebhookWorkflowPrompt: Prompt = {
   ]
 };
 
-// Промт для создания рабочего процесса трансформации данных
+// Prompt for creating a data transformation workflow
 export const dataTransformationWorkflowPrompt: Prompt = {
   id: PROMPT_IDS.DATA_TRANSFORMATION_WORKFLOW,
   name: 'Data Transformation Workflow',
@@ -189,7 +189,7 @@ export const dataTransformationWorkflowPrompt: Prompt = {
   ]
 };
 
-// Промт для создания рабочего процесса интеграции
+// Prompt for creating an integration workflow
 export const integrationWorkflowPrompt: Prompt = {
   id: PROMPT_IDS.INTEGRATION_WORKFLOW,
   name: 'External Service Integration Workflow',
@@ -264,7 +264,7 @@ export const integrationWorkflowPrompt: Prompt = {
   ]
 };
 
-// Получение всех доступных промтов
+// Get all available prompts
 export function getAllPrompts(): Prompt[] {
   return [
     scheduleWorkflowPrompt,
@@ -274,22 +274,22 @@ export function getAllPrompts(): Prompt[] {
   ];
 }
 
-// Получение промта по ID
+// Get prompt by ID
 export function getPromptById(id: string): Prompt | undefined {
   return getAllPrompts().find(prompt => prompt.id === id);
 }
 
-// Заполнение шаблона значениями переменных
+// Fill template with variable values
 export function fillPromptTemplate(promptId: string, variables: Record<string, string>): any {
   const prompt = getPromptById(promptId);
   if (!prompt) {
     throw new Error(`Prompt with id ${promptId} not found`);
   }
 
-  // Создаем копию шаблона для заполнения
+  // Create a copy of the template for filling
   const template = JSON.parse(JSON.stringify(prompt.template));
 
-  // Проверяем, что все обязательные переменные предоставлены
+  // Check that all required variables are provided
   prompt.variables
     .filter((v: PromptVariable) => v.required)
     .forEach((v: PromptVariable) => {
@@ -298,12 +298,12 @@ export function fillPromptTemplate(promptId: string, variables: Record<string, s
       }
     });
 
-  // Функция для рекурсивного заполнения переменных в объекте
+  // Function for recursive variable replacement in an object
   function replaceVariables(obj: any, currentPrompt: Prompt): any {
     if (typeof obj === 'string') {
-      // Заменяем все переменные вида {var_name} на их значения
+      // Replace all variables in the format {var_name} with their values
       return obj.replace(/\{([^}]+)\}/g, (match, varName) => {
-        // Передаем промт как параметр функции, чтобы избежать проблем с undefined
+        // Pass prompt as a function parameter to avoid undefined issues
         const variableDefault = currentPrompt.variables.find((v: PromptVariable) => v.name === varName)?.defaultValue;
         return variables[varName] || variableDefault || match;
       });
@@ -319,6 +319,6 @@ export function fillPromptTemplate(promptId: string, variables: Record<string, s
     return obj;
   }
 
-  // Заполняем переменные в шаблоне, передавая prompt как аргумент
+  // Fill variables in the template, passing prompt as an argument
   return replaceVariables(template, prompt);
 } 
