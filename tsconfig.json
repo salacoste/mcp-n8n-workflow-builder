@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "rootDir": "./src",
+    "outDir": "./build",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@modelcontextprotocol/sdk": ["src/types/sdk.d.ts"],
+      "@modelcontextprotocol/sdk/stdio": ["src/types/sdk.d.ts"],
+      "@modelcontextprotocol/sdk/types": ["src/types/sdk.d.ts"]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ]
+}

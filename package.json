@@ -1,0 +1,25 @@
+{
+  "name": "@makafeli/n8n-workflow-builder",
+  "version": "0.3.0",
+  "scripts": {
+    "clean": "rm -rf build",
+    "build": "tsc",
+    "dev": "tsc -w",
+    "start": "node build/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.1",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bin": {
+    "n8n-workflow-builder": "build/index.js"
+  }
+}
