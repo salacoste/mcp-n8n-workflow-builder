@@ -29,4 +29,11 @@ docs/
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log* 
+yarn-error.log*
+
+# Personnal config files
+cline_mcp_settings.json 
+
+# Test scripts
+test-*.js
+mcp-test.log 

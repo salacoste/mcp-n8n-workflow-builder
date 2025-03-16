@@ -152,6 +152,7 @@ The following tools are available through the MCP protocol:
 - **delete_workflow**: Deletes a workflow by its ID.
 - **activate_workflow**: Activates a workflow by its ID.
 - **deactivate_workflow**: Deactivates a workflow by its ID.
+- **execute_workflow**: Manually executes a workflow by its ID.
 
 #### Execution Management
 - **list_executions**: Displays a list of all workflow executions with filtering capabilities.
@@ -181,6 +182,7 @@ The server offers predefined workflow templates through the prompts system:
 - **HTTP Webhook Workflow**: Create a workflow that responds to HTTP webhook requests
 - **Data Transformation Workflow**: Create a workflow for processing and transforming data
 - **External Service Integration Workflow**: Create a workflow that integrates with external services
+- **API Data Polling Workflow**: Create a workflow that polls an API and processes data with filtering
 
 Each prompt has variables that can be customized when generating a workflow, such as workflow name, schedule expression, webhook path, and more.
 
@@ -227,6 +229,25 @@ This MCP server has been specifically tested and validated with:
 - **MCP Protocol**: Latest version compatible with Claude and Cursor
 
 If you're using a different version of n8n, some API endpoints or node types may differ. Please report any compatibility issues in the GitHub repository.
+
+## Changelog
+
+### Version 0.6.1
+- Fixed NPM package configuration
+- Excluded test scripts and sensitive files from NPM package
+
+### Version 0.6.0
+- Added **execute_workflow** tool to manually run workflows by ID
+- Added new **API Data Polling Workflow** template for efficient API data retrieval and filtering
+- Improved error handling for workflow creation and validation
+- Added validation checks for typical workflow configuration issues
+- Better error messages with suggestions for common problems
+
+### Version 0.5.0
+- Initial public release
+- Basic workflow management functionality
+- Execution tracking and monitoring
+- Four workflow templates
 
 ## License
 
