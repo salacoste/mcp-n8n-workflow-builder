@@ -1,6 +1,6 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
-  "version": "0.3.14",
+  "version": "0.5.0",
   "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE",
   "scripts": {
     "clean": "rm -rf build",
@@ -40,7 +40,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/salacoste/mcp-n8n-workflow-builder.git"
+    "url": "git+https://github.com/salacoste/mcp-n8n-workflow-builder.git"
   },
   "bugs": {
     "url": "https://github.com/salacoste/mcp-n8n-workflow-builder/issues"
