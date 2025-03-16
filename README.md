@@ -182,6 +182,58 @@ When working with n8n version 1.82.3, please note the following important requir
 
 The `activate_workflow` tool implements intelligent detection of trigger nodes and adds necessary attributes to ensure compatibility with the n8n API.
 
+### Known Limitations and API Issues
+
+During testing with n8n version 1.82.3, we've identified several API limitations that users should be aware of:
+
+#### Trigger Node Activation Issue
+
+The n8n API enforces strict requirements for workflow activation that aren't clearly documented:
+
+```
+Status: 400
+Error: Workflow has no node to start the workflow - at least one trigger, poller or webhook node is required
+```
+
+**Impact**:
+- Workflows without a recognized trigger node cannot be activated via API
+- The `manualTrigger` node is NOT recognized as a valid trigger despite being usable in the UI
+- Even adding attributes like `group: ['trigger']` to `manualTrigger` does not solve the issue
+
+**Our solution**:
+- The `activate_workflow` function automatically detects missing trigger nodes
+- Adds a properly configured `scheduleTrigger` when needed
+- Preserves all your existing nodes and connections
+
+#### Tag Management Conflicts
+
+When updating tags that already exist, the API returns a **409 Conflict Error**:
+
+```
+Status: 409
+Error: Tag with this name already exists
+```
+
+**Impact**:
+- Tag updates may fail if a tag with the requested name already exists
+- This happens even when updating a tag to the same name
+
+**Our solution**:
+- The test script now implements UUID generation for tag names
+- Performs cleanup of existing tags before testing
+- Implements proper error handling for tag conflicts
+
+#### Execution Limitations
+
+The execution API has limitations with certain trigger types:
+
+- **Webhook triggers**: Return 404 errors when executed via API (expected behavior)
+- **Manual triggers**: Cannot be properly executed through the API in version 1.82.3
+- **Schedule triggers**: Can be activated but may not execute immediately
+
+**Recommendation**:
+For workflows that need to be executed via API, use the `scheduleTrigger` with your desired interval settings.
+
 ### MCP Resources
 
 The server provides the following resources for more efficient context access:
