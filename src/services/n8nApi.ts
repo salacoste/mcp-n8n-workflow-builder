@@ -52,6 +52,9 @@ export async function createWorkflow(workflowInput: WorkflowInput): Promise<N8NW
     // Преобразуем входные данные в формат, принимаемый API
     const validatedWorkflow = validateWorkflowSpec(workflowInput);
     
+    // Предварительная проверка на типичные проблемы
+    validateWorkflowConfiguration(validatedWorkflow);
+    
     // Логгируем данные для отладки
     logger.log(`Sending workflow data to API: ${JSON.stringify(validatedWorkflow)}`);
     
@@ -59,8 +62,92 @@ export async function createWorkflow(workflowInput: WorkflowInput): Promise<N8NW
     logger.log(`Workflow created with ID: ${response.data.id}`);
     return response.data;
   } catch (error) {
+    // Расширенная обработка ошибок с проверкой типичных случаев
+    if (axios.isAxiosError(error) && error.response?.status) {
+      const status = error.response.status;
+      const message = error.response?.data?.message;
+      
+      if (status === 400) {
+        // Проблемы с форматом или структурой данных
+        if (message?.includes('property values')) {
+          logger.error(`Validation error with property values: ${message}`);
+          throw new Error(`API rejected workflow due to invalid property values. This may happen with complex Set node configurations. Try simplifying the values or using a Code node instead.`);
+        }
+        
+        if (message?.includes('already exists')) {
+          logger.error(`Workflow name conflict: ${message}`);
+          throw new Error(`A workflow with this name already exists. Please choose a unique name for your workflow.`);
+        }
+      }
+      
+      if (status === 401 || status === 403) {
+        logger.error(`Authentication error: ${status} ${message}`);
+        throw new Error(`Authentication error: Please check that your N8N_API_KEY is correct and has the necessary permissions.`);
+      }
+      
+      if (status === 413) {
+        logger.error(`Payload too large: ${message}`);
+        throw new Error(`The workflow is too large. Try splitting it into smaller workflows or reducing the complexity.`);
+      }
+      
+      if (status === 429) {
+        logger.error(`Rate limit exceeded: ${message}`);
+        throw new Error(`Rate limit exceeded. Please wait before creating more workflows.`);
+      }
+      
+      if (status >= 500) {
+        logger.error(`n8n server error: ${status} ${message}`);
+        throw new Error(`The n8n server encountered an error. Please check the n8n logs for more information.`);
+      }
+    }
+    
     return handleApiError('creating workflow', error);
   }
+}
+
+/**
+ * Validates a workflow configuration for common issues
+ */
+function validateWorkflowConfiguration(workflow: WorkflowSpec): void {
+  // Проверка на наличие узлов
+  if (!workflow.nodes || workflow.nodes.length === 0) {
+    throw new Error('Workflow must contain at least one node');
+  }
+  
+  // Проверка наличия узлов-триггеров для активации
+  const hasTriggerNode = workflow.nodes.some(node => {
+    const nodeType = node.type.toLowerCase();
+    return nodeType.includes('trigger') || 
+           nodeType.includes('webhook') || 
+           nodeType.includes('cron') || 
+           nodeType.includes('interval') ||
+           nodeType.includes('schedule');
+  });
+  
+  if (!hasTriggerNode) {
+    logger.warn('Workflow does not contain any trigger nodes. It cannot be activated automatically.');
+  }
+  
+  // Проверка наличия изолированных узлов без соединений
+  const connectedNodes = new Set<string>();
+  Object.keys(workflow.connections).forEach(sourceId => {
+    connectedNodes.add(sourceId);
+    workflow.connections[sourceId]?.main?.forEach(outputs => {
+      outputs?.forEach(connection => {
+        if (connection?.node) {
+          connectedNodes.add(connection.node);
+        }
+      });
+    });
+  });
+  
+  const isolatedNodes = workflow.nodes.filter(node => !connectedNodes.has(node.id));
+  if (isolatedNodes.length > 0) {
+    const isolatedNodeNames = isolatedNodes.map(node => node.name).join(', ');
+    logger.warn(`Workflow contains isolated nodes that are not connected: ${isolatedNodeNames}`);
+  }
+  
+  // Возможно добавить другие проверки (циклы, ошибки в типах узлов и т.д.)
 }
 
 /**
@@ -258,5 +345,37 @@ export async function deleteExecution(id: number): Promise<N8NExecutionResponse>
     return response.data;
   } catch (error) {
     return handleApiError(`deleting execution with ID ${id}`, error);
+  }
+}
+
+/**
+ * Manually executes a workflow
+ * @param id Workflow ID to execute
+ * @param runData Optional data to pass to the workflow
+ */
+export async function executeWorkflow(id: string, runData?: Record<string, any>): Promise<N8NExecutionResponse> {
+  try {
+    logger.log(`Manually executing workflow with ID: ${id}`);
+    
+    // Prepare request data
+    const requestData = {
+      workflowData: runData || {}
+    };
+    
+    // Call the n8n API to execute the workflow
+    const response = await api.post(`/workflows/${id}/execute`, requestData);
+    logger.log(`Workflow execution started with ID: ${response.data.executionId || 'unknown'}`);
+    
+    // If the response includes an executionId, fetch the execution details
+    if (response.data && response.data.executionId) {
+      const executionId = response.data.executionId;
+      // Wait a bit to ensure execution has started processing
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return await getExecution(executionId, true);
+    }
+    
+    return response.data;
+  } catch (error) {
+    return handleApiError(`executing workflow with ID ${id}`, error);
   }
 }

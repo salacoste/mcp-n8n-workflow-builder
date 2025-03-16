@@ -258,6 +258,25 @@ class N8NWorkflowServer {
             }
           },
           {
+            name: 'execute_workflow',
+            enabled: true,
+            description: 'Manually execute a workflow by ID',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: { 
+                  type: 'string',
+                  description: 'The ID of the workflow to execute'
+                },
+                runData: { 
+                  type: 'object',
+                  description: 'Optional data to pass to the workflow'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
             name: 'create_workflow',
             enabled: true,
             description: 'Create a new workflow in n8n',
@@ -507,7 +526,20 @@ class N8NWorkflowServer {
                 this.log('error', `Failed to list workflows: ${error.message}`, error);
                 throw new McpError(ErrorCode.InternalError, `Failed to list workflows: ${error.message}`);
               }
+
+            case 'execute_workflow':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
+              }
               
+              const executionResult = await n8nApi.executeWorkflow(args.id, args.runData);
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(executionResult, null, 2) 
+                }]
+              };
+            
             case 'create_workflow':
               try {
                 // Ensure args is an object

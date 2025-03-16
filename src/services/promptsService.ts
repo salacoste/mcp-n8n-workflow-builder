@@ -5,7 +5,8 @@ export const PROMPT_IDS = {
   SCHEDULE_WORKFLOW: 'schedule-workflow',
   HTTP_WEBHOOK_WORKFLOW: 'http-webhook-workflow',
   DATA_TRANSFORMATION_WORKFLOW: 'data-transformation-workflow',
-  INTEGRATION_WORKFLOW: 'integration-workflow'
+  INTEGRATION_WORKFLOW: 'integration-workflow',
+  API_POLLING_WORKFLOW: 'api-polling-workflow'
 };
 
 // Prompt for creating a workflow with schedule trigger
@@ -264,13 +265,122 @@ export const integrationWorkflowPrompt: Prompt = {
   ]
 };
 
+// New prompt for creating an API polling workflow
+export const apiPollingWorkflowPrompt: Prompt = {
+  id: PROMPT_IDS.API_POLLING_WORKFLOW,
+  name: 'API Data Polling Workflow',
+  description: 'Create a workflow that polls an API and processes data',
+  template: {
+    name: '{workflow_name}',
+    nodes: [
+      {
+        name: 'Interval Trigger',
+        type: 'n8n-nodes-base.interval',
+        parameters: {
+          interval: '{interval_value}'
+        }
+      },
+      {
+        name: 'HTTP Request',
+        type: 'n8n-nodes-base.httpRequest',
+        parameters: {
+          url: '{api_url}',
+          method: 'GET',
+          authentication: 'none',
+          options: {}
+        }
+      },
+      {
+        name: 'Filter Data',
+        type: 'n8n-nodes-base.code',
+        parameters: {
+          jsCode: 'const data = $input.first().json;\n\n// Define filtering logic\nconst filtered = data.{filter_path} || [];\n\n// Apply additional filtering if needed\nconst result = filtered.filter(item => {filter_condition});\n\nreturn { json: { filtered: result, count: result.length } };'
+        }
+      },
+      {
+        name: 'Set Status',
+        type: 'n8n-nodes-base.set',
+        parameters: {
+          values: [
+            {
+              name: 'status',
+              value: 'success',
+              type: 'string'
+            },
+            {
+              name: 'timestamp',
+              value: '={{$now.toISOString()}}',
+              type: 'string'
+            },
+            {
+              name: 'message',
+              value: '={{"Data fetch and filter complete. Found " + $json.count + " items."}}',
+              type: 'string'
+            }
+          ],
+          options: {
+            dotNotation: true
+          }
+        }
+      }
+    ],
+    connections: [
+      {
+        source: 'Interval Trigger',
+        target: 'HTTP Request'
+      },
+      {
+        source: 'HTTP Request',
+        target: 'Filter Data'
+      },
+      {
+        source: 'Filter Data',
+        target: 'Set Status'
+      }
+    ]
+  },
+  variables: [
+    {
+      name: 'workflow_name',
+      description: 'Name of the workflow',
+      defaultValue: 'API Polling Workflow',
+      required: true
+    },
+    {
+      name: 'interval_value',
+      description: 'Polling interval in minutes (1-60)',
+      defaultValue: '15',
+      required: true
+    },
+    {
+      name: 'api_url',
+      description: 'URL of the API to poll',
+      defaultValue: 'https://api.example.com/data',
+      required: true
+    },
+    {
+      name: 'filter_path',
+      description: 'JSON path to the array in the API response',
+      defaultValue: 'items',
+      required: true
+    },
+    {
+      name: 'filter_condition',
+      description: 'JavaScript condition to filter items (e.g. item.status === "active")',
+      defaultValue: 'true',
+      required: false
+    }
+  ]
+};
+
 // Get all available prompts
 export function getAllPrompts(): Prompt[] {
   return [
     scheduleWorkflowPrompt,
     httpWebhookWorkflowPrompt,
     dataTransformationWorkflowPrompt,
-    integrationWorkflowPrompt
+    integrationWorkflowPrompt,
+    apiPollingWorkflowPrompt
   ];
 }
 
