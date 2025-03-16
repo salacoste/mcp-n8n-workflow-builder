@@ -17,9 +17,23 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 
 ## Installation Guide
 
-### 1. Clone the Repository
+### 1. Install from npm (Recommended)
 
-Clone the repository from GitHub:
+You can install the package directly from npm:
+
+```bash
+# Install globally
+npm install -g @kernel.salacoste/n8n-workflow-builder
+
+# Or as a local dependency
+npm install @kernel.salacoste/n8n-workflow-builder
+```
+
+After installation, you need to configure the environment variables (see step 3).
+
+### 2. Clone the Repository
+
+Alternatively, you can clone the repository from GitHub:
 
 ```bash
 git clone https://github.com/salacoste/mcp-n8n-workflow-builder.git
@@ -31,7 +45,7 @@ Then navigate to the project directory:
 cd mcp-n8n-workflow-builder
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 
 Install the necessary dependencies using npm:
 
@@ -39,7 +53,7 @@ Install the necessary dependencies using npm:
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Create an `.env` file in the project root with the following variables:
 
@@ -48,9 +62,21 @@ N8N_HOST=https://your-n8n-instance.com/api/v1/
 N8N_API_KEY=your_api_key_here
 ```
 
-### 4. Build and Run
+### 5. Build and Run
 
-Use the following commands to build and run the project:
+If you installed via npm globally, you can run the server using the command:
+
+```bash
+n8n-workflow-builder
+```
+
+Or with JSON-RPC mode:
+
+```bash
+n8n-workflow-builder --json-rpc
+```
+
+If you cloned the repository or installed as a local dependency, use the following commands:
 
 - **Build the project:**
   
@@ -72,7 +98,7 @@ Use the following commands to build and run the project:
 
 The server will start and accept requests via stdio or JSON-RPC depending on the mode.
 
-### 5. Claude App Integration
+### 6. Claude App Integration
 
 For integration with Claude App, you need to create a configuration file `cline_mcp_settings.json`. You can copy the example from `cline_mcp_settings.example.json` and edit it:
 

@@ -13,20 +13,33 @@ Before you begin, ensure you have:
 
 ## Installation Steps
 
-### 1. Clone the Repository
+### 1. Install from npm (Recommended)
+
+The easiest way to install the n8n Workflow Builder is directly from npm:
+
+```bash
+# Install globally
+npm install -g @kernel.salacoste/n8n-workflow-builder
+```
+
+### 2. Alternative: Clone the Repository
+
+If you prefer to work with the source code directly:
 
 ```bash
 git clone https://github.com/salacoste/mcp-n8n-workflow-builder.git
 cd mcp-n8n-workflow-builder
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
+
+If you cloned the repository, install dependencies:
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
+### 4. Configure Environment Variables
 
 Create a `.env` file in the project root:
 
@@ -37,13 +50,17 @@ N8N_API_KEY=your_api_key_here
 
 Make sure to replace the placeholder values with your actual n8n instance URL and API key.
 
-### 4. Build the Project
+### 5. Build the Project
+
+If you cloned the repository:
 
 ```bash
 npm run build
 ```
 
-### 5. Configure Claude Integration
+This step is not needed if you installed from npm.
+
+### 6. Configure Claude Integration
 
 #### For Claude App
 
@@ -80,6 +97,12 @@ Add the following configuration (adjusting paths as needed):
     ]
   }
 }
+```
+
+If you installed the package globally from npm, you can use the package name in the `args` field:
+
+```json
+"args": ["n8n-workflow-builder"],
 ```
 
 #### For Cursor IDE

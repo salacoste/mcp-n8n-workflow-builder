@@ -2,7 +2,7 @@ name: mcp-n8n-workflow-builder
 displayName: MCP n8n Workflow Builder
 description: An MCP server for programmatically creating and managing n8n workflows.
 category: productivity
-publisher: makafeli
+publisher: IMD
 repository: https://github.com/salacoste/mcp-n8n-workflow-builder
 license: MIT
 keywords:

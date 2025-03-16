@@ -1,11 +1,15 @@
 {
-  "name": "@makafeli/n8n-workflow-builder",
-  "version": "0.3.0",
+  "name": "@kernel.salacoste/n8n-workflow-builder",
+  "version": "0.3.12",
+  "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE",
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc",
     "dev": "tsc -w",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "prepublishOnly": "npm run clean && npm run build",
+    "publish": "npm publish --access public",
+    "npm-login": "npm login"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
@@ -21,5 +25,28 @@
   },
   "bin": {
     "n8n-workflow-builder": "build/index.js"
+  },
+  "keywords": [
+    "n8n",
+    "workflow",
+    "automation",
+    "mcp",
+    "claude",
+    "cursor",
+    "ai",
+    "model-context-protocol"
+  ],
+  "author": "IMD",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/salacoste/mcp-n8n-workflow-builder.git"
+  },
+  "bugs": {
+    "url": "https://github.com/salacoste/mcp-n8n-workflow-builder/issues"
+  },
+  "homepage": "https://github.com/salacoste/mcp-n8n-workflow-builder",
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
