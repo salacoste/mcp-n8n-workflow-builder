@@ -1,191 +1,108 @@
-# Using Workflow Prompts with Claude
+# Using Workflow Prompts with n8n Workflow Builder
 
-This guide explains how to use the prompt templates feature to quickly create workflows in n8n using Claude AI.
+The n8n Workflow Builder includes a powerful prompts system that allows you to quickly create common workflow patterns through Claude's natural language interface. This guide explains how to use these predefined workflow templates effectively.
 
-## What are Workflow Prompts?
+## Available Workflow Prompts
 
-Workflow prompts are predefined templates for common workflow patterns that can be filled with your specific variables. These templates help you create functional workflows quickly without having to design them from scratch.
+The system offers the following workflow templates:
 
-## Available Prompts
+1. **Schedule Triggered Workflow**  
+   Create a workflow that runs on a defined schedule.
 
-The n8n Workflow Builder offers the following prompt templates:
+2. **HTTP Webhook Workflow**  
+   Create a workflow that responds to HTTP webhook requests.
 
-### 1. Schedule Triggered Workflow
+3. **Data Transformation Workflow**  
+   Create a workflow for processing and transforming data.
 
-Create a workflow that runs on a specified schedule (like every hour, daily, etc.).
+4. **External Service Integration Workflow**  
+   Create a workflow that integrates with external services via API.
 
-**Required variables:**
-- `workflow_name`: Name of your workflow
-- `schedule_expression`: Cron expression for schedule timing
+5. **API Data Polling Workflow**  
+   Create a workflow that polls an API and processes data with filtering.
 
-**Optional variables:**
-- `workflow_message`: Custom message included in workflow execution
+## Trigger Node Compatibility
 
-**Example conversation:**
+When using workflow prompts, it's important to understand the n8n v1.82.3 trigger node requirements:
 
-```
-User: I want to create a workflow that runs every 15 minutes
+- **Valid trigger nodes**: Workflows must have a valid trigger node to be activated
+- **Recommended triggers**: The prompts system uses compatible trigger nodes such as `scheduleTrigger` and `webhook`
+- **Automatic handling**: The system automatically ensures proper trigger node configuration
+- **Activation guarantee**: All workflows created through prompts will have valid trigger nodes for successful activation
 
-Claude: I'll help you create a scheduled workflow in n8n. I can use a prompt template for this.
+## How to Use Workflow Prompts
 
-The workflow needs a name and a schedule. What would you like to name it?
+### Basic Usage Pattern
 
-User: System Health Check
+1. **Ask for a template**: Request a specific workflow type based on your needs
+2. **Provide variables**: Answer Claude's questions about workflow specifics
+3. **Review & customize**: Review the generated workflow and make adjustments
 
-Claude: Great! I'll create a scheduled workflow named "System Health Check" that runs every 15 minutes.
+### Example Conversations
 
-I'll use the "Schedule Triggered Workflow" prompt with:
-- workflow_name: System Health Check
-- schedule_expression: */15 * * * *
-- workflow_message: Running system health verification
+#### Example 1: Schedule Triggered Workflow
 
-Would you like me to create this workflow now?
+**You**: Create a workflow that runs every day at 9 AM to send a status report.
 
-User: Yes, please
+**Claude**: I'll help you create a schedule-triggered workflow. I need some information:
 
-Claude: I've created the "System Health Check" workflow using the schedule template.
-Workflow ID: YoNk24jknHj4dNZV
-Status: Active
-Schedule: Every 15 minutes
-```
+- What name would you like for this workflow?
+- Should it run every day at 9 AM, or do you want a different schedule?
+- What actions should occur after the trigger?
 
-### 2. HTTP Webhook Workflow
+**You**: Name it "Daily Status Report", run at 9 AM daily, and it should send an email to team@example.com.
 
-Create a workflow that triggers when it receives an HTTP request to a specific endpoint.
+**Claude**: [Creates the workflow with a properly configured scheduleTrigger node]
 
-**Required variables:**
-- `workflow_name`: Name of your workflow
-- `webhook_path`: Path for the webhook endpoint
+#### Example 2: Webhook Workflow
 
-**Optional variables:**
-- `response_message`: Message to include in the response
+**You**: I need a webhook workflow that processes incoming JSON data.
 
-**Example conversation:**
+**Claude**: Let's create a webhook-triggered workflow. Please provide:
 
-```
-User: Create an API endpoint for user registration
+- Name for this workflow
+- The webhook path (e.g., "/incoming-data")
+- What processing should happen with the incoming data?
 
-Claude: I can help you create a webhook-based workflow for user registration.
+**You**: Name: "Process Incoming Data", path: "/process-data", and it should filter records with status "completed".
 
-I'll use the "HTTP Webhook Workflow" prompt. What would you like to name this workflow?
+**Claude**: [Creates the workflow with a correctly configured webhook trigger node]
 
-User: User Registration API
+## Variable Customization
 
-Claude: I'll create an HTTP webhook workflow with:
-- workflow_name: User Registration API
-- webhook_path: user-registration
-- response_message: User registration request received successfully
+Each workflow prompt has specific variables you can customize:
 
-Once created, you'll be able to send POST requests to:
-https://your-n8n-instance.com/webhook/user-registration
+### Schedule Triggered Workflow
+- **Workflow name**: Name for your workflow
+- **Schedule expression**: When to run (e.g., "every day at 9 AM", "every hour", "every Monday at 8 AM")
+- **Actions**: What actions to perform on trigger
 
-Would you like me to create this workflow?
+### HTTP Webhook Workflow
+- **Workflow name**: Name for your workflow
+- **Webhook path**: The URL path to expose
+- **Authentication**: Whether to require authentication
+- **Response handling**: How to process the request and format the response
 
-User: Yes, proceed
+### Data Transformation Workflow
+- **Workflow name**: Name for your workflow
+- **Data source**: Where to get the data
+- **Transformation rules**: How to transform the data
+- **Destination**: Where to send the processed data
 
-Claude: The "User Registration API" workflow has been created.
-Workflow ID: 8nJks2jpQlM5dZxY
-Status: Active
-Webhook URL: https://your-n8n-instance.com/webhook/user-registration
-```
+## Tips for Effective Use
 
-### 3. Data Transformation Workflow
+1. **Be specific**: Provide clear details about what you want the workflow to do
+2. **Start simple**: Begin with basic workflows and add complexity later
+3. **Combine templates**: You can ask Claude to combine aspects of different templates
+4. **Iterate**: Use the created workflow as a starting point and refine it through conversation
 
-Create a workflow that processes and transforms input data.
+## Troubleshooting
 
-**Required variables:**
-- `workflow_name`: Name of your workflow
-- `sample_data`: Example JSON data to transform
-- `transformation_code`: JavaScript code for the transformation
+If you encounter issues with workflow templates:
 
-**Example conversation:**
+1. **Activation problems**: Make sure your n8n instance is configured correctly and accessible
+2. **Missing nodes**: If specific nodes are missing, check if your n8n instance has them installed
+3. **Execution errors**: Check workflow execution logs in n8n for details
+4. **Trigger issues**: Ensure the trigger node is properly configured according to your n8n version requirements
 
-```
-User: I need a workflow to format customer data
-
-Claude: I can create a data transformation workflow for you.
-
-I'll use the "Data Transformation Workflow" template. What would you like to name this workflow?
-
-User: Customer Data Formatter
-
-Claude: I'll create a data transformation workflow with:
-- workflow_name: Customer Data Formatter
-- sample_data: {"customers":[{"id":1,"name":"John Doe","email":"john@example.com"},{"id":2,"name":"Jane Smith","email":"jane@example.com"}]}
-- transformation_code: // Format customer records
-data.customers = data.customers.map(customer => ({
-  customerId: customer.id,
-  fullName: customer.name.toUpperCase(),
-  emailAddress: customer.email,
-  createdAt: new Date().toISOString()
-}));
-
-Would you like me to create this workflow now?
-
-User: Yes
-
-Claude: I've created the "Customer Data Formatter" workflow.
-Workflow ID: TrP8m3kLnQ7xWbZ9
-Status: Inactive (manual trigger)
-
-You can now use this workflow by triggering it manually and providing customer data.
-```
-
-### 4. External Service Integration Workflow
-
-Create a workflow that connects to external APIs or services.
-
-**Required variables:**
-- `workflow_name`: Name of your workflow
-- `schedule_expression`: When to run the integration
-- `api_url`: URL of the external API
-- `processing_code`: JavaScript code to process the API response
-
-**Example conversation:**
-
-```
-User: Create a workflow that fetches weather data daily
-
-Claude: I can help you create an integration workflow for daily weather data.
-
-I'll use the "External Service Integration Workflow" template. What would you like to name this workflow?
-
-User: Daily Weather Report
-
-Claude: I'll create an external service integration workflow with:
-- workflow_name: Daily Weather Report
-- schedule_expression: 0 8 * * * (runs at 8 AM daily)
-- api_url: https://api.weatherapi.com/v1/forecast.json?key=YOUR_API_KEY&q=London&days=1
-- processing_code: // Extract weather data
-const location = data.location.name;
-const current = data.current;
-data.processed = {
-  location,
-  temperature: current.temp_c,
-  condition: current.condition.text,
-  humidity: current.humidity,
-  reportDate: new Date().toISOString().split('T')[0]
-};
-
-Would you like me to create this workflow?
-
-User: Yes, create it
-
-Claude: I've created the "Daily Weather Report" workflow.
-Workflow ID: Lkj72pQ8mR4xYzNv
-Status: Active (scheduled at 8 AM daily)
-
-Note: You'll need to update the API URL with your actual weather API key.
-```
-
-## Tips for Using Prompts
-
-1. **Be specific** about what type of workflow you need when asking Claude.
-
-2. **Provide all required variables** when prompted to ensure your workflow is properly configured.
-
-3. **Check the created workflow** in your n8n instance and make any additional customizations as needed.
-
-4. **Use the workflow ID** provided by Claude to retrieve or modify the workflow later.
-
-5. **Consider starting with prompts** for common patterns, then customize them for more complex requirements. 
+Remember that Claude can help troubleshoot issues with your workflow. Simply describe the problem you're experiencing, and Claude will suggest solutions. 

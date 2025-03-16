@@ -145,10 +145,61 @@ function findNodeByNameOrId(nodes: Array<any>, nameOrId: string): any {
   // Если не нашли по ID, ищем по имени
   const nodeByName = nodes.find(node => node.name === nameOrId);
   if (nodeByName) {
-    console.log(`Note: Found node "${nameOrId}" by name instead of ID. Using node ID: ${nodeByName.id}`);
+    // Используем console.error вместо console.log для записи в stderr, а не stdout
+    // и не мешаем JSON-ответу
+    console.error(`Note: Found node "${nameOrId}" by name instead of ID. Using node ID: ${nodeByName.id}`);
     return nodeByName;
   }
   
   // Не нашли узел
   return null;
+}
+
+/**
+ * Transforms connections from n8n object format to array format
+ * This is used when we need to send connections to an endpoint that expects an array
+ */
+export function transformConnectionsToArray(connections: ConnectionMap | any): LegacyWorkflowConnection[] {
+  // If it's already an array, return it
+  if (Array.isArray(connections)) {
+    return connections;
+  }
+  
+  // If it's not an object or is null/undefined, return an empty array
+  if (!connections || typeof connections !== 'object') {
+    return [];
+  }
+  
+  // Transform from object format to array format
+  const result: LegacyWorkflowConnection[] = [];
+  
+  // Iterate through each source node
+  Object.entries(connections).forEach(([sourceName, sourceData]: [string, any]) => {
+    // Skip if there's no 'main' property or it's not an array
+    if (!sourceData.main || !Array.isArray(sourceData.main)) {
+      return;
+    }
+    
+    // Iterate through source outputs (each is an array of connections)
+    sourceData.main.forEach((outputConnections: any[], sourceOutput: number) => {
+      // Skip if connections is not an array
+      if (!Array.isArray(outputConnections)) {
+        return;
+      }
+      
+      // Add each connection to the result
+      outputConnections.forEach((conn: any) => {
+        if (conn && typeof conn === 'object' && conn.node) {
+          result.push({
+            source: sourceName,
+            target: conn.node,
+            sourceOutput,
+            targetInput: conn.index || 0
+          });
+        }
+      });
+    });
+  });
+  
+  return result;
 }

@@ -1,4 +1,5 @@
 import { ExecutionData, ExecutionMode } from './execution';
+import { Tag } from './tag';
 
 export interface N8NWorkflowResponse {
   id: string;
@@ -47,4 +48,21 @@ export interface N8NExecutionListResponse {
  */
 export interface N8NErrorResponse {
   error: string;
+}
+
+/**
+ * Response structure for a single tag
+ */
+export interface N8NTagResponse extends Tag {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Response structure when listing tags
+ */
+export interface N8NTagListResponse {
+  data: N8NTagResponse[];
+  nextCursor?: string;
 }

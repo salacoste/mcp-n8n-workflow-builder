@@ -159,7 +159,28 @@ The following tools are available through the MCP protocol:
 - **get_execution**: Gets details of a specific execution by its ID.
 - **delete_execution**: Deletes an execution record by its ID.
 
+#### Tag Management
+- **create_tag**: Creates a new tag.
+- **get_tags**: Gets a list of all tags.
+- **get_tag**: Gets tag details by its ID.
+- **update_tag**: Updates an existing tag.
+- **delete_tag**: Deletes a tag by its ID.
+
 All tools have been tested and optimized for n8n version 1.82.3. The node types and API structures used are compatible with this version.
+
+### Important Note About Workflow Triggers
+
+When working with n8n version 1.82.3, please note the following important requirements:
+
+- **Trigger nodes are required for activation**: n8n requires at least one valid trigger node to successfully activate a workflow.
+- **Valid trigger node types** include:
+  - `scheduleTrigger` (recommended for automation)
+  - `webhook` (for HTTP-triggered workflows)
+  - Service-specific trigger nodes
+- **Automatic trigger addition**: The `activate_workflow` tool automatically adds a `scheduleTrigger` node when no trigger is detected
+- **Manual trigger limitation**: The `manualTrigger` node type is NOT recognized as a valid trigger by n8n API v1.82
+
+The `activate_workflow` tool implements intelligent detection of trigger nodes and adds necessary attributes to ensure compatibility with the n8n API.
 
 ### MCP Resources
 
@@ -199,6 +220,43 @@ In the `examples` directory, you'll find examples and instructions for setting u
 
 You can use the provided test scripts to verify the functionality:
 
+### Using test-mcp-tools.js
+
+The `test-mcp-tools.js` script provides comprehensive testing of all MCP tools against your n8n instance. This is the recommended way to validate your setup and ensure all functionality works correctly.
+
+```bash
+# Run all tests
+node test-mcp-tools.js
+```
+
+The script performs the following tests:
+1. Health check and tools availability
+2. Workflow management (create, read, update, activate)
+3. Tag management (create, read, update, delete)
+4. Execution management (execute, list, get, delete)
+
+The test script creates temporary test workflows and tags which are automatically cleaned up after testing. You can customize the test behavior by modifying the test configuration variables at the top of the script.
+
+```javascript
+// Configuration options in test-mcp-tools.js
+const config = {
+  mcpServerUrl: 'http://localhost:3456/mcp',
+  healthCheckUrl: 'http://localhost:3456/health',
+  testWorkflowName: 'Test Workflow MCP',
+  // ... other options
+};
+
+// Test flags to enable/disable specific test suites
+const testFlags = {
+  runWorkflowTests: true,
+  runTagTests: true, 
+  runExecutionTests: true,
+  runCleanup: true
+};
+```
+
+### Additional Test Scripts
+
 ```bash
 # Test basic functionality with Claude
 node test-claude.js
@@ -231,6 +289,14 @@ This MCP server has been specifically tested and validated with:
 If you're using a different version of n8n, some API endpoints or node types may differ. Please report any compatibility issues in the GitHub repository.
 
 ## Changelog
+
+### Version 0.7.0
+- Enhanced trigger node detection and compatibility with n8n 1.82.3
+- Improved handling of workflow activation when no trigger node exists
+- Added proper handling of different trigger node types (schedule, webhook)
+- Fixed tag management with proper conflict handling and UUID generation
+- Updated documentation with trigger node requirements and compatibility notes
+- Improved test-mcp-tools.js with enhanced workflow testing and error handling
 
 ### Version 0.6.1
 - Fixed NPM package configuration

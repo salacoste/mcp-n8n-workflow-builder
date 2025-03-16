@@ -6,6 +6,9 @@ dotenv.config();
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import express, { Request, Response, Application } from 'express';
+import cors from 'cors';
+import * as http from 'http';
 import { 
   CallToolRequestSchema, 
   ListToolsRequestSchema,
@@ -18,7 +21,7 @@ import * as n8nApi from './services/n8nApi';
 import { WorkflowBuilder } from './services/workflowBuilder';
 import { validateWorkflowSpec } from './utils/validation';
 import logger from './utils/logger';
-import { WorkflowInput } from './types/workflow';
+import { WorkflowInput, LegacyWorkflowConnection } from './types/workflow';
 import * as promptsService from './services/promptsService';
 import { Prompt } from './types/prompts';
 
@@ -36,8 +39,11 @@ interface ToolCallResult {
 
 class N8NWorkflowServer {
   private server: InstanceType<typeof Server>;
+  private isDebugMode: boolean;
 
   constructor() {
+    this.isDebugMode = process.env.DEBUG === 'true';
+    
     this.server = new Server(
       { name: 'n8n-workflow-builder', version: '0.3.0' },
       { capabilities: { tools: {}, resources: {}, prompts: {} } }
@@ -48,11 +54,15 @@ class N8NWorkflowServer {
     this.server.onerror = (error: any) => this.log('error', `Server error: ${error.message || error}`);
   }
 
-  private log(level: 'info' | 'error' | 'debug', message: string, ...args: any[]) {
+  private log(level: 'info' | 'error' | 'debug' | 'warn', message: string, ...args: any[]) {
     const timestamp = new Date().toISOString();
-    console.error(`${timestamp} [n8n-workflow-builder] [${level}] ${message}`);
-    if (args.length > 0) {
-      console.error(...args);
+    
+    // В режиме отладки выводим больше информации
+    if (this.isDebugMode || level !== 'debug') {
+      console.error(`${timestamp} [n8n-workflow-builder] [${level}] ${message}`);
+      if (args.length > 0) {
+        console.error(...args);
+      }
     }
   }
 
@@ -498,6 +508,89 @@ class N8NWorkflowServer {
               },
               required: ['id']
             }
+          },
+          // Tag Tools
+          {
+            name: 'create_tag',
+            enabled: true,
+            description: 'Create a new tag',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  description: 'The name of the tag to create'
+                }
+              },
+              required: ['name']
+            }
+          },
+          {
+            name: 'get_tags',
+            enabled: true,
+            description: 'Get all tags',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                cursor: {
+                  type: 'string',
+                  description: 'Cursor for pagination'
+                },
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of tags to return'
+                }
+              }
+            }
+          },
+          {
+            name: 'get_tag',
+            enabled: true,
+            description: 'Get a tag by ID',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the tag to retrieve'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
+            name: 'update_tag',
+            enabled: true,
+            description: 'Update a tag',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the tag to update'
+                },
+                name: {
+                  type: 'string',
+                  description: 'The new name for the tag'
+                }
+              },
+              required: ['id', 'name']
+            }
+          },
+          {
+            name: 'delete_tag',
+            enabled: true,
+            description: 'Delete a tag',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the tag to delete'
+                }
+              },
+              required: ['id']
+            }
           }
         ]
       };
@@ -649,22 +742,56 @@ class N8NWorkflowServer {
               };
               
               // Transform connections to LegacyWorkflowConnection[] format
-              if (args.connections && Array.isArray(args.connections)) {
-                updateInput.connections = args.connections.map((conn: any) => ({
-                  source: conn.source,
-                  target: conn.target,
-                  sourceOutput: conn.sourceOutput,
-                  targetInput: conn.targetInput
-                }));
+              if (args.connections) {
+                // Проверяем, имеет ли объект connections структуру объекта или массива
+                if (Array.isArray(args.connections)) {
+                  updateInput.connections = args.connections.map((conn: any) => ({
+                    source: conn.source,
+                    target: conn.target,
+                    sourceOutput: conn.sourceOutput,
+                    targetInput: conn.targetInput
+                  }));
+                } else if (typeof args.connections === 'object') {
+                  // Формат объекта n8n API, преобразуем его в массив LegacyWorkflowConnection
+                  const legacyConnections: LegacyWorkflowConnection[] = [];
+                  
+                  Object.entries(args.connections).forEach(([sourceName, data]: [string, any]) => {
+                    if (data.main && Array.isArray(data.main)) {
+                      data.main.forEach((connectionGroup: any[], sourceIndex: number) => {
+                        if (Array.isArray(connectionGroup)) {
+                          connectionGroup.forEach(conn => {
+                            legacyConnections.push({
+                              source: sourceName,
+                              target: conn.node,
+                              sourceOutput: sourceIndex,
+                              targetInput: conn.index || 0
+                            });
+                          });
+                        }
+                      });
+                    }
+                  });
+                  
+                  updateInput.connections = legacyConnections;
+                } else {
+                  throw new McpError(ErrorCode.InvalidParams, 'Connections must be either an array or an object');
+                }
               }
               
-              const updatedWorkflow = await n8nApi.updateWorkflow(args.id, updateInput);
-              return {
-                content: [{ 
-                  type: 'text', 
-                  text: JSON.stringify(updatedWorkflow, null, 2) 
-                }]
-              };
+              this.log('info', `Updating workflow with connections: ${JSON.stringify(updateInput.connections)}`);
+              
+              try {
+                const updatedWorkflow = await n8nApi.updateWorkflow(args.id, updateInput);
+                return {
+                  content: [{ 
+                    type: 'text', 
+                    text: JSON.stringify(updatedWorkflow, null, 2) 
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to update workflow: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to update workflow: ${error.message}`);
+              }
             
             case 'delete_workflow':
               if (!args.id) {
@@ -745,6 +872,78 @@ class N8NWorkflowServer {
                 content: [{ 
                   type: 'text', 
                   text: JSON.stringify(deletedExecution, null, 2) 
+                }]
+              };
+            
+            // Tag Tools
+            case 'create_tag':
+              if (!args.name) {
+                throw new McpError(ErrorCode.InvalidParams, 'Tag name is required');
+              }
+              
+              const createdTag = await n8nApi.createTag({ name: args.name });
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(createdTag, null, 2) 
+                }]
+              };
+            
+            case 'get_tags':
+              const tagsOptions: { cursor?: string; limit?: number } = {};
+              
+              if (args.cursor) {
+                tagsOptions.cursor = args.cursor;
+              }
+              
+              if (args.limit) {
+                tagsOptions.limit = args.limit;
+              }
+              
+              const tags = await n8nApi.getTags(tagsOptions);
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(tags, null, 2) 
+                }]
+              };
+            
+            case 'get_tag':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Tag ID is required');
+              }
+              
+              const tag = await n8nApi.getTag(args.id);
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(tag, null, 2) 
+                }]
+              };
+            
+            case 'update_tag':
+              if (!args.id || !args.name) {
+                throw new McpError(ErrorCode.InvalidParams, 'Tag ID and name are required');
+              }
+              
+              const updatedTag = await n8nApi.updateTag(args.id, { name: args.name });
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(updatedTag, null, 2) 
+                }]
+              };
+            
+            case 'delete_tag':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Tag ID is required');
+              }
+              
+              const deletedTag = await n8nApi.deleteTag(args.id);
+              return {
+                content: [{ 
+                  type: 'text', 
+                  text: JSON.stringify(deletedTag, null, 2) 
                 }]
               };
             
@@ -834,12 +1033,129 @@ class N8NWorkflowServer {
     });
   }
 
+  // Запуск MCP сервера
   async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    // Убираем вывод на консоль при запуске
+    // ВАЖНО: Не добавлять вывод в консоль здесь, так как это препятствует работе JSON-RPC через stdin/stdout
+    try {
+      // Инициализируем базовый транспорт для stdin/stdout
+      const transport = new StdioServerTransport();
+      
+      // Запускаем HTTP-сервер с портом из переменной окружения или по умолчанию
+      const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3456;
+      this.startHttpServer(port);
+      
+      // Подключаем сервер к транспорту
+      await this.server.connect(transport);
+    } catch (error) {
+      // Логируем ошибку в файл
+      this.log('error', `Failed to start MCP server: ${error instanceof Error ? error.message : String(error)}`);
+      process.exit(1);
+    }
+  }
+  
+  private async startHttpServer(port: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        const app = express();
+        
+        // Настройка CORS
+        app.use(cors());
+        
+        // Парсинг JSON
+        app.use(express.json({ limit: '50mb' }));
+        
+        // Эндпоинт для проверки работы сервера
+        app.get('/health', (req: Request, res: Response) => {
+          res.json({ 
+            status: 'ok', 
+            message: 'MCP server is running',
+            version: '0.3.0'
+          });
+        });
+        
+        // Обработчик для MCP запросов
+        app.post('/mcp', (req: Request, res: Response) => {
+          try {
+            this.log('debug', 'Received MCP request', req.body);
+            
+            // Обработка MCP запроса
+            this.handleJsonRpcMessage(req.body).then(result => {
+              this.log('debug', 'Sending MCP response', result);
+              res.json(result);
+            }).catch((error: Error) => {
+              this.log('error', 'Error handling MCP request', error);
+              res.status(500).json({
+                jsonrpc: '2.0',
+                error: {
+                  code: -32603,
+                  message: 'Internal server error',
+                  data: error.message
+                },
+                id: req.body?.id || null
+              });
+            });
+          } catch (error) {
+            this.log('error', 'Error processing MCP request', error);
+            res.status(500).json({
+              jsonrpc: '2.0',
+              error: {
+                code: -32603,
+                message: 'Internal server error',
+                data: error instanceof Error ? error.message : 'Unknown error'
+              },
+              id: req.body?.id || null
+            });
+          }
+        });
+        
+        // Запуск HTTP-сервера
+        const httpServer = http.createServer(app);
+        httpServer.listen(port, () => {
+          this.log('info', `MCP HTTP server listening on port ${port}`);
+          resolve();
+        });
+        
+        httpServer.on('error', (error) => {
+          this.log('error', `HTTP server error: ${error.message}`);
+          reject(error);
+        });
+      } catch (error) {
+        this.log('error', `Failed to start HTTP server: ${error instanceof Error ? error.message : String(error)}`);
+        reject(error);
+      }
+    });
+  }
+  
+  private async handleJsonRpcMessage(request: any): Promise<any> {
+    const { method, params, id } = request;
+    
+    // Находим соответствующий обработчик для метода
+    const handler = this.server['_requestHandlers'].get(method);
+    
+    if (!handler) {
+      throw new McpError(ErrorCode.MethodNotFound, `Method '${method}' not found`);
+    }
+    
+    try {
+      // Вызываем соответствующий обработчик с параметрами
+      const result = await handler(request);
+      
+      // Возвращаем результат в формате JSON-RPC
+      return {
+        jsonrpc: '2.0',
+        result,
+        id
+      };
+    } catch (error) {
+      this.log('error', `Handler error: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
   }
 }
 
+// Запуск сервера с обработкой ошибок
 const server = new N8NWorkflowServer();
-server.run().catch(() => {});
+server.run().catch((error) => {
+  console.error(`Fatal error starting server: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});

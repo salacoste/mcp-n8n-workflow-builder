@@ -1,199 +1,172 @@
-# n8n Workflow Examples with Claude
+# n8n Workflow Examples
 
-This document contains examples of working with n8n workflows through Claude AI using the MCP n8n Workflow Builder.
+This document provides examples of common workflows you can create using the n8n Workflow Builder through Claude. These examples show how to use different workflow types, triggers, and actions.
 
-## Basic Examples
+## Basic Workflow Concepts
 
-### List All Workflows
+Every n8n workflow consists of the following components:
 
-To view all available workflows in your n8n instance:
+1. **Trigger Node**: Determines when the workflow should execute (e.g., schedule, webhook, manual)
+2. **Processing Nodes**: Perform operations on the data (e.g., transformations, HTTP requests)
+3. **Output Nodes**: Deliver the results (e.g., email, database write, HTTP response)
 
+## Important Notes About Trigger Nodes
+
+When creating workflows for n8n version 1.82.3, be aware of the following requirements:
+
+- **Valid trigger required**: A workflow must have at least one valid trigger node to be activated
+- **Automatic trigger addition**: If you don't specify a trigger, the system will add a `scheduleTrigger` automatically
+- **Manual trigger limitation**: The `manualTrigger` node is not recognized as valid by the n8n API v1.82.3
+
+### Recommended Trigger Types
+
+For successful workflow activation, use one of these trigger types:
+
+1. **Schedule Trigger** (recommended for automated tasks):
 ```
-Show me all my n8n workflows
-```
-
-Claude will display a list of your workflows, including their IDs, names, and active status.
-
-### Get Workflow Details
-
-To see details about a specific workflow:
-
-```
-Show me details for workflow ID "abc123"
-```
-
-Replace `abc123` with your actual workflow ID. Claude will show the workflow's nodes, connections, and other configuration details.
-
-### Create a Simple Workflow
-
-To create a basic workflow:
-
-```
-Create a workflow named "Simple Test" with a manual trigger and a Set node that sets a value called "message" to "Hello World"
+"type": "n8n-nodes-base.scheduleTrigger"
 ```
 
-Claude will create the workflow and provide you with the ID and other details.
-
-### Update a Workflow
-
-To modify an existing workflow:
-
+2. **Webhook Trigger** (for HTTP-based triggers):
 ```
-Update workflow "abc123" to add a Code node after the Set node that logs the message value
+"type": "n8n-nodes-base.webhook" 
 ```
 
-### Delete a Workflow
+3. **Service-specific Triggers** (e.g., Google Calendar Trigger)
 
-To delete a workflow:
+## Example Workflows
 
+### 1. Schedule-Triggered Data Fetch
+
+This workflow runs on a schedule, fetches data from an API, and processes it.
+
+**Claude command**: 
 ```
-Delete workflow with ID "abc123"
-```
-
-Claude will ask for confirmation before deleting.
-
-### Activate/Deactivate Workflows
-
-To change a workflow's active status:
-
-```
-Activate workflow "abc123"
+Create a workflow that runs every day at 8 AM to fetch stock prices from an API, filter stocks with price changes >5%, and send the results via email.
 ```
 
-or
+**Key components**:
+- Trigger: Schedule (every day at 8 AM)
+- Action: HTTP Request to fetch stock data
+- Processing: Filter for significant price changes
+- Output: Send email notification
 
+### 2. Webhook Data Processor
+
+This workflow receives data via webhook, processes it, and stores the results.
+
+**Claude command**:
 ```
-Deactivate workflow "abc123"
-```
-
-## Working with Executions
-
-### List Workflow Executions
-
-To view execution history:
-
-```
-Show me the execution history for workflow "abc123"
-```
-
-or
-
-```
-List all successful executions from the past 24 hours
+Create a webhook workflow that receives customer data, validates required fields, transforms the format, and stores valid entries in a database.
 ```
 
-### Get Execution Details
+**Key components**:
+- Trigger: Webhook (receives HTTP POST requests)
+- Processing: Validate and transform data
+- Output: Database storage operation
+- Response: HTTP response to the sender
 
-To see details about a specific execution:
+### 3. Data Integration Pipeline
 
+This workflow connects different systems by moving and transforming data between them.
+
+**Claude command**:
 ```
-Show me details for execution ID 42
-```
-
-Replace `42` with your actual execution ID.
-
-### Delete an Execution
-
-To remove execution history:
-
-```
-Delete execution with ID 42
+Create a workflow to sync customer data between Salesforce and HubSpot every 6 hours, mapping fields and only updating changed records.
 ```
 
-## Using Resources
+**Key components**:
+- Trigger: Schedule (every 6 hours)
+- Action: Fetch data from Salesforce
+- Processing: Map fields, detect changes
+- Output: Update records in HubSpot
 
-The MCP server provides resource endpoints for efficient access to n8n data.
+## Common Workflow Patterns
 
-### View All Workflows as a Resource
+### Error Handling Workflow
 
+**Claude command**:
 ```
-Show me the /workflows resource
-```
-
-### View Execution Statistics
-
-```
-Show me execution statistics
-```
-
-## Using Workflow Prompts
-
-For more efficient workflow creation, you can use predefined templates:
-
-### Schedule-Based Workflow
-
-```
-I need a workflow that runs every hour and sends a status update
+Create a workflow with proper error handling that fetches data from an API and retries up to 3 times if the request fails, then sends a notification if all attempts fail.
 ```
 
-Claude will suggest using the Schedule Triggered Workflow prompt and guide you through the setup.
+### Data Transformation Workflow
 
-### Webhook API Workflow
-
+**Claude command**:
 ```
-Create an API endpoint for receiving customer feedback
-```
-
-Claude will use the HTTP Webhook Workflow prompt to help you build this.
-
-### Data Transformation
-
-```
-I need a workflow to process and format CSV data
+Create a workflow that takes a CSV file with customer data, converts it to JSON, removes sensitive fields, and outputs the cleaned data to a new file.
 ```
 
-Claude will recommend the Data Transformation Workflow prompt and assist with customization.
+### Multi-step Approval Workflow
 
-### External API Integration
-
+**Claude command**:
 ```
-Build a workflow that fetches stock prices and alerts me on significant changes
-```
-
-Claude will suggest the External Service Integration Workflow prompt.
-
-## Natural Language Workflow Building
-
-You can also describe workflows in natural language, and Claude will help build them:
-
-```
-Create a workflow that monitors a folder for new files, processes any CSV files by extracting customer information, and then sends that data to a Google Sheet
+Create a workflow that receives an expense request via webhook, sends an approval email to a manager, waits for their response, and then either proceeds with payment or sends a rejection notification.
 ```
 
-Claude will break this down into steps and create the appropriate workflow structure.
+## Testing Your Workflows
 
-## Advanced Techniques
+After creating a workflow, you can test it:
 
-### Conditional Logic
+1. **For scheduled workflows**: Trigger execution manually
+   ```
+   Execute my "Daily Data Report" workflow now
+   ```
 
+2. **For webhook workflows**: Send a test HTTP request
+   ```
+   What's the URL for my "Customer Data Processor" webhook? I want to test it with Postman.
+   ```
+
+3. **Check execution results**:
+   ```
+   Show me the last execution of my "Stock Price Alert" workflow
+   ```
+
+## Workflow Management Examples
+
+### Listing Workflows
+
+**Claude command**:
 ```
-Create a workflow that processes incoming orders, sending high-value orders to a manager for approval and automatically processing others
-```
-
-### Multi-Node Workflows
-
-```
-I need a workflow that pulls data from an API, transforms it, splits it into different categories, and sends notifications based on the category
-```
-
-### Error Handling
-
-```
-Add error handling to workflow "abc123" so that failures send an email alert
-```
-
-## Debugging Tips
-
-Ask Claude for help when workflows aren't behaving as expected:
-
-```
-Why might my webhook workflow with ID "abc123" not be receiving data?
+List all my active workflows
 ```
 
-or 
+### Updating Workflows
 
+**Claude command**:
 ```
-How can I debug the execution issues in workflow "abc123"?
+Update my "Weekly Report" workflow to run on Fridays at 4 PM instead of Mondays
 ```
 
-Remember that Claude can analyze workflow structures and execution logs to help identify problems. 
+### Deactivating Workflows
+
+**Claude command**:
+```
+Deactivate my "Holiday Promotion" workflow
+```
+
+## Advanced Workflow Techniques
+
+### Using Environment Variables
+
+**Claude command**:
+```
+Create a workflow that uses environment variables for API keys and sensitive configuration
+```
+
+### Creating Workflow with Conditional Logic
+
+**Claude command**:
+```
+Create a workflow that processes orders differently based on their total value, with premium handling for orders over $1000
+```
+
+### Workflow with Parallel Processing
+
+**Claude command**:
+```
+Create a workflow that fetches data from multiple APIs in parallel and then combines the results
+```
+
+Remember that all workflows created through Claude will have proper trigger nodes to ensure they can be activated successfully on your n8n instance. 

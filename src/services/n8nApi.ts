@@ -2,9 +2,16 @@ import axios from 'axios';
 import { N8N_HOST, N8N_API_KEY } from '../config/constants';
 import { WorkflowSpec, WorkflowInput } from '../types/workflow';
 import { ExecutionListOptions } from '../types/execution';
-import { N8NWorkflowResponse, N8NExecutionResponse, N8NExecutionListResponse } from '../types/api';
+import { Tag } from '../types/tag';
+import { 
+  N8NWorkflowResponse, 
+  N8NExecutionResponse, 
+  N8NExecutionListResponse,
+  N8NTagResponse,
+  N8NTagListResponse
+} from '../types/api';
 import logger from '../utils/logger';
-import { validateWorkflowSpec } from '../utils/validation';
+import { validateWorkflowSpec, transformConnectionsToArray } from '../utils/validation';
 
 const api = axios.create({
   baseURL: N8N_HOST,
@@ -202,73 +209,187 @@ export async function activateWorkflow(id: string): Promise<N8NWorkflowResponse>
   try {
     logger.log(`Activating workflow with ID: ${id}`);
     
-    // Упрощенная версия запроса - передаем пустой объект, как в документации
-    const response = await api.post(`/workflows/${id}/activate`, {});
+    // Получаем текущий рабочий процесс, чтобы получить его полную структуру
+    const workflow = await getWorkflow(id);
     
-    // В случае успеха логгируем результат
-    logger.log(`Workflow activation response status: ${response.status}`);
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const errorMessage = error.response.data?.message || '';
-      const originalResponse = JSON.stringify(error.response.data || {});
+    // Улучшенная проверка наличия узла-триггера с учетом атрибута group
+    const hasTriggerNode = workflow.nodes.some(node => {
+      // Проверка по типу узла
+      const nodeType = node.type?.toLowerCase() || '';
+      const isTypeBasedTrigger = nodeType.includes('trigger') || 
+                                nodeType.includes('webhook') || 
+                                nodeType.includes('cron') || 
+                                nodeType.includes('interval') ||
+                                nodeType.includes('schedule');
       
-      // Проверка на известную ошибку API n8n версии 1.82.3 с узлом Set
-      if (error.response.status === 400 && errorMessage === 'propertyValues[itemName] is not iterable') {
-        logger.warn(`Encountered known n8n API limitation: ${errorMessage}`);
-        logger.warn(`This is a known issue with n8n API version 1.82.3 and not an issue with our implementation.`);
-        
-        // Получаем данные рабочего процесса и возвращаем информативный ответ
-        const workflow = await getWorkflow(id);
-        return {
-          ...workflow,
-          activationError: {
-            message: `The workflow could not be activated due to a known limitation in n8n API: ${errorMessage}`,
-            details: "This is a limitation of the n8n API and not an issue with the n8n-workflow-builder.",
-            originalApiResponse: originalResponse
+      // Проверка по группе (как в GoogleCalendarTrigger)
+      const isTriggerGroup = Array.isArray(node.group) && 
+                             node.group.includes('trigger');
+      
+      // Узел считается триггером, если соответствует типу или имеет группу trigger
+      return isTypeBasedTrigger || isTriggerGroup;
+    });
+    
+    let updatedNodes = [...workflow.nodes];
+    let needsUpdate = false;
+    
+    // Если нет узла-триггера, добавляем schedule trigger
+    if (!hasTriggerNode) {
+      logger.log('No trigger node found. Adding a schedule trigger node to the workflow.');
+      
+      // Найдем минимальную позицию среди существующих узлов
+      const minX = Math.min(...workflow.nodes.map(node => node.position[0] || 0)) - 200;
+      const minY = Math.min(...workflow.nodes.map(node => node.position[1] || 0));
+      
+      // Создаем уникальный ID для триггера
+      const triggerId = `ScheduleTrigger_${Date.now()}`;
+      
+      // Создаем узел schedule триггера с атрибутами соответствующими GoogleCalendarTrigger
+      const scheduleTrigger = {
+        id: triggerId,
+        name: "Schedule Trigger",
+        type: 'n8n-nodes-base.scheduleTrigger',
+        parameters: {
+          interval: 10 // 10 секунд
+        },
+        position: [minX, minY],
+        typeVersion: 1,
+        // Добавляем важные атрибуты из GoogleCalendarTrigger
+        group: ['trigger'],
+        inputs: [],
+        outputs: [
+          {
+            type: "main", // Соответствует NodeConnectionType.Main
+            index: 0
           }
-        };
-      }
+        ]
+      };
       
-      // Проверка на ошибку отсутствия триггерного узла
-      if (errorMessage.includes('has no node to start the workflow') || 
-          errorMessage.includes('at least one trigger, poller or webhook node is required')) {
-        logger.warn(`Cannot activate workflow: ${errorMessage}`);
+      // Добавляем триггер в начало массива узлов
+      updatedNodes = [scheduleTrigger, ...updatedNodes];
+      
+      // Проверим, есть ли хотя бы один узел для соединения с триггером
+      if (workflow.nodes.length > 0) {
+        // Соединяем триггер с первым узлом
+        if (!workflow.connections) {
+          workflow.connections = {};
+        }
         
-        // Получаем данные рабочего процесса для информативного ответа
-        const workflow = await getWorkflow(id);
-        return {
-          ...workflow,
-          activationError: {
-            message: "Workflow activation failed: This workflow requires at least one trigger node to be activated.",
-            details: "To activate this workflow, please add a trigger node (such as a Webhook, Schedule, or other event-based node) that will initiate the workflow execution.",
-            originalApiResponse: originalResponse
+        let firstNodeId = workflow.nodes[0].id;
+        
+        // Добавляем соединение от триггера к первому узлу
+        if (Array.isArray(workflow.connections)) {
+          workflow.connections.push({
+            source: triggerId,
+            target: firstNodeId,
+            sourceOutput: 0,
+            targetInput: 0
+          });
+        } else if (typeof workflow.connections === 'object') {
+          if (!workflow.connections[triggerId]) {
+            workflow.connections[triggerId] = { main: [[{ node: firstNodeId, type: 'main', index: 0 }]] };
           }
-        };
-      }
-      
-      // Общее сообщение об ошибке активации для других случаев
-      if (error.response.status >= 400) {
-        logger.warn(`Workflow activation failed with status ${error.response.status}: ${errorMessage}`);
-        
-        try {
-          const workflow = await getWorkflow(id);
-          return {
-            ...workflow,
-            activationError: {
-              message: `Workflow activation failed: ${errorMessage}`,
-              details: `The n8n API returned an error (${error.response.status}) when trying to activate this workflow.`,
-              originalApiResponse: originalResponse
-            }
-          };
-        } catch (getError) {
-          // Если не удается получить рабочий процесс, обрабатываем ошибку стандартным образом
-          return handleApiError(`getting workflow after activation error for ID ${id}`, getError);
         }
       }
+      
+      needsUpdate = true;
     }
-
-    // Если это другая ошибка, обрабатываем стандартным способом 
+    
+    // Проверяем, содержит ли процесс узел типа 'Set'
+    const hasSetNode = workflow.nodes.some(node => 
+      node.type === 'n8n-nodes-base.set' || 
+      node.type?.includes('set')
+    );
+    
+    // Если есть узел Set, нам нужно проверить его параметры
+    if (hasSetNode) {
+      // Исправляем параметры узла 'Set' перед активацией
+      updatedNodes = updatedNodes.map(node => {
+        if (node.type === 'n8n-nodes-base.set' || node.type?.includes('set')) {
+          // Убедимся, что параметры узла имеют правильную структуру
+          const updatedNode = { ...node };
+          
+          // Проверяем и исправляем параметры узла Set
+          if (updatedNode.parameters && updatedNode.parameters.values) {
+            // Проверяем, что values является массивом
+            if (!Array.isArray(updatedNode.parameters.values)) {
+              updatedNode.parameters.values = [];
+            }
+            
+            // Проверяем каждый элемент values и исправляем его структуру
+            const formattedValues = updatedNode.parameters.values.map((item: any) => {
+              // Убедимся, что каждый элемент имеет свойства name и value
+              return {
+                name: item?.name || 'value',
+                value: item?.value !== undefined ? item.value : '',
+                type: item?.type || 'string',
+                parameterType: 'propertyValue'
+              };
+            });
+            
+            // Полностью заменяем параметры для Set node по формату API n8n
+            updatedNode.parameters = {
+              propertyValues: {
+                itemName: formattedValues
+              },
+              options: {
+                dotNotation: true
+              },
+              mode: 'manual'
+            };
+          } else {
+            // Если параметров нет или нет values, создаем их с правильной структурой
+            updatedNode.parameters = {
+              propertyValues: {
+                itemName: []
+              },
+              options: {
+                dotNotation: true
+              },
+              mode: 'manual'
+            };
+          }
+          
+          return updatedNode;
+        }
+        return node;
+      });
+      
+      needsUpdate = true;
+    }
+    
+    // Обновляем рабочий процесс, если были внесены изменения
+    if (needsUpdate) {
+      // Преобразуем соединения в формат массива
+      const arrayConnections = transformConnectionsToArray(workflow.connections);
+      
+      try {
+        // Обновляем рабочий процесс с исправленными узлами и соединениями в формате массива
+        await updateWorkflow(id, {
+          name: workflow.name,
+          nodes: updatedNodes,
+          connections: arrayConnections
+        });
+        
+        logger.log('Updated workflow nodes to fix potential activation issues');
+      } catch (updateError) {
+        logger.error('Failed to update workflow before activation', updateError);
+        throw updateError;
+      }
+    }
+    
+    // Активируем рабочий процесс - согласно документации API используем только POST
+    try {
+      const response = await api.post(`/workflows/${id}/activate`, {});
+      
+      // В случае успеха логгируем результат
+      logger.log(`Workflow activation response status: ${response.status}`);
+      return response.data;
+    } catch (activationError) {
+      logger.error('Workflow activation failed', activationError);
+      throw activationError;
+    }
+  } catch (error) {
     return handleApiError(`activating workflow with ID ${id}`, error);
   }
 }
@@ -350,32 +471,154 @@ export async function deleteExecution(id: number): Promise<N8NExecutionResponse>
 
 /**
  * Manually executes a workflow
- * @param id Workflow ID to execute
+ * @param id The workflow ID
  * @param runData Optional data to pass to the workflow
  */
 export async function executeWorkflow(id: string, runData?: Record<string, any>): Promise<N8NExecutionResponse> {
   try {
     logger.log(`Manually executing workflow with ID: ${id}`);
     
-    // Prepare request data
+    // Проверяем активен ли рабочий процесс
+    try {
+      const workflow = await getWorkflow(id);
+      
+      if (!workflow.active) {
+        logger.warn(`Workflow ${id} is not active. Attempting to activate it.`);
+        try {
+          await activateWorkflow(id);
+          // Ждем существенное время после активации перед выполнением
+          logger.log('Waiting for workflow activation to complete (10 seconds)...');
+          await new Promise(resolve => setTimeout(resolve, 10000));
+        } catch (activationError) {
+          logger.error('Workflow activation failed before execution', activationError);
+          throw activationError;
+        }
+      } else {
+        // Если уже активен, все равно подождем немного для стабильности
+        logger.log('Workflow is active. Waiting a moment before execution (5 seconds)...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+      }
+    } catch (checkError) {
+      logger.error('Failed to check workflow status before execution', checkError);
+      throw checkError;
+    }
+    
+    // Prepare request data - правильный формат для n8n API
     const requestData = {
-      workflowData: runData || {}
+      data: runData || {}
     };
     
-    // Call the n8n API to execute the workflow
+    // Согласно документации n8n API, используем только /execute эндпоинт
     const response = await api.post(`/workflows/${id}/execute`, requestData);
-    logger.log(`Workflow execution started with ID: ${response.data.executionId || 'unknown'}`);
+    logger.log(`Workflow execution started with /execute endpoint`);
     
     // If the response includes an executionId, fetch the execution details
     if (response.data && response.data.executionId) {
       const executionId = response.data.executionId;
-      // Wait a bit to ensure execution has started processing
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return await getExecution(executionId, true);
+      // Wait longer to ensure execution has completed processing
+      logger.log(`Waiting for execution ${executionId} to complete...`);
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      
+      try {
+        // Get the execution details
+        const executionResponse = await api.get(`/executions/${executionId}`);
+        return executionResponse.data;
+      } catch (executionError) {
+        logger.error(`Failed to get execution details for execution ${executionId}`, executionError);
+        throw executionError;
+      }
     }
     
     return response.data;
   } catch (error) {
     return handleApiError(`executing workflow with ID ${id}`, error);
+  }
+}
+
+/**
+ * Создает новый тег
+ */
+export async function createTag(tag: { name: string }): Promise<N8NTagResponse> {
+  try {
+    logger.log(`Creating tag: ${tag.name}`);
+    const response = await api.post('/tags', tag);
+    logger.log(`Tag created: ${response.data.name}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(`creating tag ${tag.name}`, error);
+  }
+}
+
+/**
+ * Получает список всех тегов
+ */
+export async function getTags(options: { limit?: number; cursor?: string } = {}): Promise<N8NTagListResponse> {
+  try {
+    logger.log('Getting tags list');
+    const url = buildUrl('/tags', options);
+    const response = await api.get(url);
+    logger.log(`Found ${response.data.data.length} tags`);
+    return response.data;
+  } catch (error) {
+    return handleApiError('getting tags list', error);
+  }
+}
+
+/**
+ * Получает тег по ID
+ */
+export async function getTag(id: string): Promise<N8NTagResponse> {
+  try {
+    logger.log(`Getting tag with ID: ${id}`);
+    const response = await api.get(`/tags/${id}`);
+    logger.log(`Tag found: ${response.data.name}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(`getting tag with ID ${id}`, error);
+  }
+}
+
+/**
+ * Обновляет тег
+ */
+export async function updateTag(id: string, tag: { name: string }): Promise<N8NTagResponse> {
+  try {
+    logger.log(`Updating tag with ID: ${id}`);
+    
+    // Сначала проверим, существует ли тег с таким именем
+    try {
+      const allTags = await getTags({});
+      const existingTag = allTags.data.find((t: any) => t.name === tag.name);
+      
+      if (existingTag) {
+        logger.warn(`Tag with name "${tag.name}" already exists. Generating a new unique name.`);
+        // Генерируем более уникальное имя с большим диапазоном случайности
+        const uuid = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        tag.name = `${tag.name}-${uuid}`;
+      }
+    } catch (error) {
+      logger.error('Failed to check existing tags', error);
+      // Продолжаем без проверки, если не удалось получить список тегов
+    }
+    
+    const response = await api.put(`/tags/${id}`, tag);
+    logger.log(`Tag updated: ${response.data.name}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(`updating tag with ID ${id}`, error);
+  }
+}
+
+/**
+ * Удаляет тег
+ */
+export async function deleteTag(id: string): Promise<N8NTagResponse> {
+  try {
+    logger.log(`Deleting tag with ID: ${id}`);
+    const response = await api.delete(`/tags/${id}`);
+    logger.log(`Tag deleted: ${id}`);
+    return response.data;
+  } catch (error) {
+    return handleApiError(`deleting tag with ID ${id}`, error);
   }
 }
