@@ -311,7 +311,7 @@ class N8NWorkflowServer {
                 },
                 connections: {
                   type: 'array',
-                  description: 'Array of connections between nodes. Each connection defines how data flows from source to target node.',
+                  description: 'Array of connections between nodes. Each connection defines how data flows from source to target node. This field is critical for workflow functionality. Without connections, the workflow nodes will not interact with each other. Example: [{"source":"Node1","target":"Node2"}]',
                   items: {
                     type: 'object',
                     properties: {
@@ -338,7 +338,7 @@ class N8NWorkflowServer {
                   }
                 }
               },
-              required: ['nodes']
+              required: ['nodes', 'name', 'connections']
             }
           },
           {
@@ -551,10 +551,16 @@ class N8NWorkflowServer {
                   throw new McpError(ErrorCode.InvalidParams, 'Workflow name and nodes are required');
                 }
                 
+                if (!parameters.connections || !Array.isArray(parameters.connections) || parameters.connections.length === 0) {
+                  this.log('info', 'No connections provided. Workflow nodes will not be connected.');
+                  throw new McpError(ErrorCode.InvalidParams, 'Connections array is required and must not be empty. Each workflow node should be properly connected.');
+                }
+                
                 // Create input data in the required format
                 const workflowInput: WorkflowInput = {
                   name: parameters.name,
-                  nodes: parameters.nodes as any[]
+                  nodes: parameters.nodes as any[],
+                  connections: []
                 };
                 
                 // Check and transform nodes
@@ -568,13 +574,27 @@ class N8NWorkflowServer {
                 if (parameters.connections && Array.isArray(parameters.connections)) {
                   workflowInput.connections = parameters.connections.map((conn: any) => {
                     if (!conn.source || !conn.target) {
-                      throw new McpError(ErrorCode.InvalidParams, 'Connection is missing source or target');
+                      throw new McpError(ErrorCode.InvalidParams, 'Connection is missing source or target fields. Each connection must define both source and target nodes.');
                     }
+                    
+                    // Check that source and target nodes exist in the workflow
+                    const sourceNode = workflowInput.nodes.find(node => node.name === conn.source || node.id === conn.source);
+                    const targetNode = workflowInput.nodes.find(node => node.name === conn.target || node.id === conn.target);
+                    
+                    if (!sourceNode) {
+                      throw new McpError(ErrorCode.InvalidParams, `Connection references non-existent source node: "${conn.source}"`);
+                    }
+                    
+                    if (!targetNode) {
+                      throw new McpError(ErrorCode.InvalidParams, `Connection references non-existent target node: "${conn.target}"`);
+                    }
+                    
+                    // Всегда используем имя узла для connections - это обеспечит совместимость с n8n UI
                     return {
-                      source: conn.source,
-                      target: conn.target,
-                      sourceOutput: conn.sourceOutput,
-                      targetInput: conn.targetInput
+                      source: sourceNode.name,
+                      target: targetNode.name,
+                      sourceOutput: conn.sourceOutput || 0,
+                      targetInput: conn.targetInput || 0
                     };
                   });
                 }
@@ -624,7 +644,8 @@ class N8NWorkflowServer {
               // Create input data for updating in the required format
               const updateInput: WorkflowInput = {
                 name: args.name,
-                nodes: args.nodes as any[]
+                nodes: args.nodes as any[],
+                connections: []
               };
               
               // Transform connections to LegacyWorkflowConnection[] format

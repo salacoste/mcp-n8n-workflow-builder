@@ -48,7 +48,7 @@ export interface WorkflowInput {
     id?: string;
     position?: number[];
   }[];
-  connections?: LegacyWorkflowConnection[];
+  connections: LegacyWorkflowConnection[];
   active?: boolean;
   settings?: Record<string, any>;
   tags?: string[];

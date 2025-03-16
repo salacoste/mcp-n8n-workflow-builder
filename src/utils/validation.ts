@@ -13,6 +13,14 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
     throw new McpError(ErrorCode.InvalidParams, 'Workflow nodes must be an array');
   }
   
+  if (!Array.isArray(input.connections)) {
+    throw new McpError(ErrorCode.InvalidParams, 'Workflow connections must be an array');
+  }
+  
+  if (input.connections.length === 0) {
+    throw new McpError(ErrorCode.InvalidParams, 'Workflow connections array cannot be empty. Nodes must be connected.');
+  }
+  
   // Check and transform nodes
   const formattedNodes = (input.nodes || []).map((node, index) => {
     if (typeof node !== 'object' || typeof node.type !== 'string' || typeof node.name !== 'string') {
@@ -70,29 +78,44 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
       const sourceNode = findNodeByNameOrId(formattedNodes, conn.source);
       const targetNode = findNodeByNameOrId(formattedNodes, conn.target);
       
-      if (!sourceNode || !targetNode) {
-        throw new McpError(ErrorCode.InvalidParams, `Connection references non-existent node: ${conn.source} -> ${conn.target}`);
+      if (!sourceNode) {
+        throw new McpError(ErrorCode.InvalidParams, `Connection references non-existent source node: "${conn.source}"`);
       }
       
-      // Create connection structure if it doesn't exist yet
-      if (!connections[sourceNode.id]) {
-        connections[sourceNode.id] = { main: [] };
+      if (!targetNode) {
+        throw new McpError(ErrorCode.InvalidParams, `Connection references non-existent target node: "${conn.target}"`);
+      }
+      
+      // Используем имя узла в качестве ключа для соединений
+      if (!connections[sourceNode.name]) {
+        connections[sourceNode.name] = { main: [] };
       }
       
       // Make sure the array for sourceOutput exists
       const sourceOutput = conn.sourceOutput || 0;
-      while (connections[sourceNode.id].main.length <= sourceOutput) {
-        connections[sourceNode.id].main.push([]);
+      while (connections[sourceNode.name].main.length <= sourceOutput) {
+        connections[sourceNode.name].main.push([]);
       }
       
-      // Add the connection
-      connections[sourceNode.id].main[sourceOutput].push({
-        node: targetNode.id,
+      // Используем имя целевого узла для target
+      connections[sourceNode.name].main[sourceOutput].push({
+        node: targetNode.name,
         type: 'main',
         index: conn.targetInput || 0
       });
     });
+  } else {
+    throw new McpError(ErrorCode.InvalidParams, 'Workflow connections are missing or invalid. Please provide a valid connections array.');
   }
+  
+  // Проверка на некорректные ключи соединений
+  Object.keys(connections).forEach(nodeKey => {
+    const matchingNode = formattedNodes.find(node => node.name === nodeKey);
+    if (!matchingNode) {
+      console.warn(`Warning: Found connection with invalid node name "${nodeKey}". Removing this connection.`);
+      delete connections[nodeKey];
+    }
+  });
   
   // Default settings
   const defaultSettings = { executionOrder: 'v1' };
@@ -110,8 +133,22 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
 }
 
 /**
- * Finds a node by name or ID
+ * Finds a node by name or ID, prioritizing ID matching
  */
 function findNodeByNameOrId(nodes: Array<any>, nameOrId: string): any {
-  return nodes.find(node => node.id === nameOrId || node.name === nameOrId);
+  // Сначала ищем точное совпадение по ID
+  const nodeById = nodes.find(node => node.id === nameOrId);
+  if (nodeById) {
+    return nodeById;
+  }
+  
+  // Если не нашли по ID, ищем по имени
+  const nodeByName = nodes.find(node => node.name === nameOrId);
+  if (nodeByName) {
+    console.log(`Note: Found node "${nameOrId}" by name instead of ID. Using node ID: ${nodeByName.id}`);
+    return nodeByName;
+  }
+  
+  // Не нашли узел
+  return null;
 }
