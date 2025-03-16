@@ -115,7 +115,8 @@ Then edit the file, providing the correct environment variable values:
     "args": ["path/to/your/project/build/index.js"],
     "env": {
       "N8N_HOST": "https://your-n8n-instance.com/api/v1/",
-      "N8N_API_KEY": "your_api_key_here"
+      "N8N_API_KEY": "your_api_key_here",
+      "MCP_PORT": "58921"
     },
     "disabled": false,
     "alwaysAllow": [
@@ -136,7 +137,11 @@ Then edit the file, providing the correct environment variable values:
 }
 ```
 
-**Important:** Do not add `cline_mcp_settings.json` to the repository as it contains your personal access credentials.
+**Important Notes:**
+- The `MCP_PORT` parameter is optional but recommended to avoid port conflicts
+- Use a non-standard high port (like 58921) if you encounter conflicts
+- Starting with version 0.7.2, the server gracefully handles port conflicts
+- Do not add `cline_mcp_settings.json` to the repository as it contains your personal access credentials
 
 ## Available Tools and Features
 
@@ -331,6 +336,120 @@ node test-workflow.js
 - If you have problems with Claude integration, check the location of the `cline_mcp_settings.json` file.
 - For debugging, run with the `--json-rpc` flag and use curl to send test requests to port 3000.
 
+### Common Errors and Solutions
+
+#### Port Already in Use (EADDRINUSE)
+
+If you see the following error in logs:
+```
+Error: listen EADDRINUSE: address already in use :::3456
+```
+
+This means that port 3456 (default for the MCP server) is already in use by another process. To fix:
+
+**Option 1: Use a Different Port with Environment Variable**
+
+Starting from version 0.7.2, you can specify a custom port using the `MCP_PORT` environment variable:
+
+```bash
+# In your code
+MCP_PORT=58921 npm start
+
+# Or when running directly
+MCP_PORT=58921 node build/index.js
+```
+
+If using Claude Desktop, update your `cline_mcp_settings.json` to include the new port:
+```json
+{
+  "n8n-workflow-builder": {
+    "command": "node",
+    "args": ["path/to/your/project/build/index.js"],
+    "env": {
+      "N8N_HOST": "https://your-n8n-instance.com/api/v1/",
+      "N8N_API_KEY": "your_api_key_here",
+      "MCP_PORT": "58921"
+    },
+    // ...
+  }
+}
+```
+
+**Option 2: Find and kill the process using the port**
+```bash
+# On macOS/Linux
+lsof -i :3456
+kill -9 <PID>
+
+# On Windows
+netstat -ano | findstr :3456
+taskkill /PID <PID> /F
+```
+
+**Note on Version 0.7.2+:** Starting with version 0.7.2, the server includes improved handling for port conflicts, automatically detecting when a port is already in use and gracefully continuing operation without throwing errors. This is especially helpful when Claude Desktop attempts to start multiple instances of the same server.
+
+### Running Multiple Server Instances
+
+If you need to run multiple instances of the n8n workflow builder server (for example, for different n8n installations), you can do this by configuring separate ports:
+
+1. **Configure different ports for each instance**:
+   ```bash
+   # First instance
+   MCP_PORT=58921 node build/index.js
+   
+   # Second instance
+   MCP_PORT=58922 node build/index.js
+   ```
+
+2. **Create separate Claude Desktop configurations**:
+   For each instance, create a separate entry in your `claude_desktop_config.json` file:
+   
+   ```json
+   {
+     "mcpServers": {
+       "n8n-workflow-builder-prod": {
+         "command": "node",
+         "args": ["path/to/build/index.js"],
+         "env": {
+           "N8N_HOST": "https://production-n8n.example.com/api/v1/",
+           "N8N_API_KEY": "your_prod_api_key",
+           "MCP_PORT": "58921"
+         }
+       },
+       "n8n-workflow-builder-dev": {
+         "command": "node",
+         "args": ["path/to/build/index.js"],
+         "env": {
+           "N8N_HOST": "https://dev-n8n.example.com/api/v1/",
+           "N8N_API_KEY": "your_dev_api_key",
+           "MCP_PORT": "58922"
+         }
+       }
+     }
+   }
+   ```
+
+3. **Access each instance in Claude**:
+   After restarting Claude Desktop, you'll see both servers available in your tools list.
+
+#### Authentication Errors
+
+If you see errors related to API authentication:
+```
+Error: Request failed with status code 401
+```
+
+Check that:
+1. Your API key is correct and hasn't expired
+2. The N8N_API_KEY in your `.env` file matches your n8n instance
+3. Your n8n instance has API access enabled
+
+#### Set Node Parameter Error
+
+If you encounter the error `node.parameters.values.map is not a function` when creating workflows:
+
+This usually happens when creating workflows with Set nodes that use the newer n8n parameter structure. Version 0.7.2+ includes a fix that supports both the legacy array format and the newer object-based format for Set node parameters.
+
 ## Version Compatibility
 
 This MCP server has been specifically tested and validated with:
@@ -341,6 +460,20 @@ This MCP server has been specifically tested and validated with:
 If you're using a different version of n8n, some API endpoints or node types may differ. Please report any compatibility issues in the GitHub repository.
 
 ## Changelog
+
+### 0.7.2 (Current)
+- Fixed validation error when handling Set node parameters in workflow creation
+- Added improved error handling for port conflicts
+- Enhanced server startup reliability with multiple running instances
+- Fixed `node.parameters.values.map is not a function` error for modern n8n node structure
+- Added MCP_PORT environment variable support for custom port configuration
+
+### 0.7.1
+- Added detailed documentation about n8n API limitations and known issues
+- Enhanced troubleshooting section with specific error codes and solutions
+- Added comprehensive explanation of trigger node requirements
+- Improved UUID generation for tag management to prevent conflicts
+- Updated testing documentation with detailed examples
 
 ### Version 0.7.0
 - Enhanced trigger node detection and compatibility with n8n 1.82.3

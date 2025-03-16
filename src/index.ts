@@ -1110,14 +1110,21 @@ class N8NWorkflowServer {
         
         // Запуск HTTP-сервера
         const httpServer = http.createServer(app);
+
+        httpServer.on('error', (error: NodeJS.ErrnoException) => {
+          if (error.code === 'EADDRINUSE') {
+            this.log('info', `Port ${port} is already in use. Assuming another instance is already running.`);
+            // Резолвим промис для graceful handling
+            resolve();
+          } else {
+            this.log('error', `HTTP server error: ${error.message}`);
+            reject(error);
+          }
+        });
+
         httpServer.listen(port, () => {
           this.log('info', `MCP HTTP server listening on port ${port}`);
           resolve();
-        });
-        
-        httpServer.on('error', (error) => {
-          this.log('error', `HTTP server error: ${error.message}`);
-          reject(error);
         });
       } catch (error) {
         this.log('error', `Failed to start HTTP server: ${error instanceof Error ? error.message : String(error)}`);

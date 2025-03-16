@@ -32,15 +32,36 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
     
     // If this is a Set type node, structure parameters according to n8n API expectations
     if (node.type === 'n8n-nodes-base.set' && node.parameters && node.parameters.values) {
-      // Create the correct parameter structure for a Set node for n8n version 1.82.3+
-      const formattedValues = node.parameters.values.map((value: any) => {
-        return {
-          name: value.name,
-          value: value.value,
-          type: value.type || 'string',
-          parameterType: 'propertyValue'
-        };
-      });
+      let formattedValues: any[] = [];
+      
+      // Handle case when values is an object with type arrays (n8n 1.82.3+ structure)
+      if (!Array.isArray(node.parameters.values) && typeof node.parameters.values === 'object') {
+        // Перебираем все типы данных (string, number, boolean и т.д.)
+        Object.entries(node.parameters.values).forEach(([type, valuesArray]) => {
+          if (Array.isArray(valuesArray)) {
+            // Добавляем все значения в общий массив с указанным типом
+            valuesArray.forEach((value: any) => {
+              formattedValues.push({
+                name: value.name,
+                value: value.value,
+                type: type,
+                parameterType: 'propertyValue'
+              });
+            });
+          }
+        });
+      } 
+      // Handle case when values is already an array (legacy structure)
+      else if (Array.isArray(node.parameters.values)) {
+        formattedValues = node.parameters.values.map((value: any) => {
+          return {
+            name: value.name,
+            value: value.value,
+            type: value.type || 'string',
+            parameterType: 'propertyValue'
+          };
+        });
+      }
       
       // Completely redefine the parameters for the Set node
       node.parameters = {
