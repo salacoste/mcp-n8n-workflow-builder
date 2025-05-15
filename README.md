@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/salacoste-mcp-n8n-workflow-builder-badge.png)](https://mseep.ai/app/salacoste-mcp-n8n-workflow-builder)
+
 # n8n Workflow Builder MCP Server
 
 This project provides an MCP (Model Context Protocol) server for managing n8n workflows. It allows you to create, update, delete, activate, and deactivate workflows through a set of tools available in Claude AI and Cursor IDE.
