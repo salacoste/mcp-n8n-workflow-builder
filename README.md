@@ -1,4 +1,3 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/salacoste-mcp-n8n-workflow-builder-badge.png)](https://mseep.ai/app/salacoste-mcp-n8n-workflow-builder)
 
 # n8n Workflow Builder MCP Server
 
@@ -460,6 +459,9 @@ This MCP server has been specifically tested and validated with:
 - **MCP Protocol**: Latest version compatible with Claude and Cursor
 
 If you're using a different version of n8n, some API endpoints or node types may differ. Please report any compatibility issues in the GitHub repository.
+
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/01934c6d-aff1-497b-9e11-b21a9d207667)
+
 
 ## Changelog
 
