@@ -8,9 +8,11 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 
 **Key Features:**
 - Full integration with Claude AI and Cursor IDE via MCP protocol
+- **Multi-instance support** - Manage multiple n8n environments (production, staging, development)
 - Create and manage n8n workflows via natural language
 - Predefined workflow templates through prompts system
 - Interactive workflow building with real-time feedback
+- Backward compatible with existing single-instance setups
 
 ## Requirements
 
@@ -59,12 +61,42 @@ npm install
 
 ### 4. Configure Environment Variables
 
+You have two options for configuration:
+
+#### Option A: Multi-Instance Configuration (Recommended)
+
+Create a `.config.json` file in the project root for managing multiple n8n environments:
+
+```json
+{
+  "environments": {
+    "production": {
+      "n8n_host": "https://n8n.example.com/api/v1/",
+      "n8n_api_key": "n8n_api_key_for_production"
+    },
+    "staging": {
+      "n8n_host": "https://staging-n8n.example.com/api/v1/", 
+      "n8n_api_key": "n8n_api_key_for_staging"
+    },
+    "development": {
+      "n8n_host": "http://localhost:5678/api/v1/",
+      "n8n_api_key": "n8n_api_key_for_development"
+    }
+  },
+  "defaultEnv": "development"
+}
+```
+
+#### Option B: Single-Instance Configuration (Legacy)
+
 Create an `.env` file in the project root with the following variables:
 
 ```
 N8N_HOST=https://your-n8n-instance.com/api/v1/
 N8N_API_KEY=your_api_key_here
 ```
+
+**Note:** The system automatically falls back to `.env` configuration if no `.config.json` is found, ensuring backward compatibility.
 
 ### 5. Build and Run
 
@@ -154,9 +186,9 @@ Then edit the file, providing the correct environment variable values:
 The following tools are available through the MCP protocol:
 
 #### Workflow Management
-- **list_workflows**: Displays a list of all workflows from n8n.
+- **list_workflows**: Displays a streamlined list of workflows with essential metadata only (ID, name, status, dates, node count, tags). Optimized for performance to prevent large data transfers.
 - **create_workflow**: Creates a new workflow in n8n.
-- **get_workflow**: Gets workflow details by its ID.
+- **get_workflow**: Gets complete workflow details by its ID (includes nodes and connections).
 - **update_workflow**: Updates an existing workflow.
 - **delete_workflow**: Deletes a workflow by its ID.
 - **activate_workflow**: Activates a workflow by its ID.
@@ -174,6 +206,23 @@ The following tools are available through the MCP protocol:
 - **get_tag**: Gets tag details by its ID.
 - **update_tag**: Updates an existing tag.
 - **delete_tag**: Deletes a tag by its ID.
+
+### Multi-Instance Support
+
+**New in v0.8.0**: All MCP tools now support an optional `instance` parameter to specify which n8n environment to target:
+
+```json
+{
+  "name": "list_workflows",
+  "arguments": {
+    "instance": "production"
+  }
+}
+```
+
+- If no `instance` parameter is provided, the default environment is used
+- Available instances are defined in your `.config.json` file
+- For single-instance setups (using `.env`), the instance parameter is ignored
 
 All tools have been tested and optimized for n8n version 1.82.3. The node types and API structures used are compatible with this version.
 
@@ -268,7 +317,66 @@ The server offers predefined workflow templates through the prompts system:
 
 Each prompt has variables that can be customized when generating a workflow, such as workflow name, schedule expression, webhook path, and more.
 
+## Migration from Single to Multi-Instance
+
+If you're currently using a single-instance setup with `.env` and want to migrate to multi-instance:
+
+1. **Create .config.json** with your existing configuration:
+   ```json
+   {
+     "environments": {
+       "default": {
+         "n8n_host": "https://your-existing-n8n.com/api/v1/",
+         "n8n_api_key": "your_existing_api_key"
+       }
+     },
+     "defaultEnv": "default"
+   }
+   ```
+
+2. **Add additional environments** as needed:
+   ```json
+   {
+     "environments": {
+       "default": {
+         "n8n_host": "https://your-existing-n8n.com/api/v1/",
+         "n8n_api_key": "your_existing_api_key"
+       },
+       "staging": {
+         "n8n_host": "https://staging-n8n.com/api/v1/",
+         "n8n_api_key": "staging_api_key"
+       }
+     },
+     "defaultEnv": "default"
+   }
+   ```
+
+3. **Keep your .env file** for backward compatibility (optional)
+
+4. **Start using instance parameters** in your MCP calls when needed
+
 ## Usage Examples
+
+### Basic Multi-Instance Usage
+
+```javascript
+// List workflows from default environment
+await listWorkflows();
+
+// List workflows from specific environment  
+await listWorkflows("production");
+
+// Create workflow in staging environment
+await createWorkflow(workflowData, "staging");
+```
+
+### Claude AI Examples
+
+You can now specify which n8n instance to target in your Claude conversations:
+
+- "List all workflows from the production environment"
+- "Create a new workflow in the staging instance"
+- "Show me executions from the development n8n"
 
 In the `examples` directory, you'll find examples and instructions for setting up and using n8n Workflow Builder with Claude App:
 
@@ -468,7 +576,19 @@ If you're using a different version of n8n, some API endpoints or node types may
 
 ## Changelog
 
-### 0.7.2 (Current)
+### 0.8.0 (Current)
+- **🎉 Multi-instance support** - Manage multiple n8n environments (production, staging, development)
+- Added `.config.json` configuration format for multiple n8n instances
+- All MCP tools now support optional `instance` parameter for environment targeting
+- Created N8NApiWrapper with centralized instance management
+- Added EnvironmentManager for API instance caching and configuration loading
+- Enhanced ConfigLoader with fallback support (.config.json → .env)
+- Maintained full backward compatibility with existing .env setups
+- Updated all tool schemas and handlers for multi-instance architecture
+- **🚀 Performance optimization** - `list_workflows` now returns streamlined metadata instead of full workflow JSON, preventing large data transfers that could crash Claude Desktop
+- Added comprehensive testing for multi-instance functionality
+
+### 0.7.2
 - Fixed validation error when handling Set node parameters in workflow creation
 - Added improved error handling for port conflicts
 - Enhanced server startup reliability with multiple running instances
