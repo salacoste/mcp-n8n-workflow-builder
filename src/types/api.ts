@@ -17,6 +17,20 @@ export interface N8NWorkflowResponse {
 }
 
 /**
+ * Streamlined workflow summary for list operations (excludes nodes/connections)
+ */
+export interface N8NWorkflowSummary {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  tags?: string[];
+  folder?: string;
+  nodeCount?: number;
+}
+
+/**
  * Represents a full workflow execution response from n8n API
  */
 export interface N8NExecutionResponse {
