@@ -133,7 +133,9 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
   Object.keys(connections).forEach(nodeKey => {
     const matchingNode = formattedNodes.find(node => node.name === nodeKey);
     if (!matchingNode) {
-      console.warn(`Warning: Found connection with invalid node name "${nodeKey}". Removing this connection.`);
+      if (process.env.DEBUG === 'true') {
+        console.error(`Warning: Found connection with invalid node name "${nodeKey}". Removing this connection.`);
+      }
       delete connections[nodeKey];
     }
   });
@@ -168,7 +170,9 @@ function findNodeByNameOrId(nodes: Array<any>, nameOrId: string): any {
   if (nodeByName) {
     // Используем console.error вместо console.log для записи в stderr, а не stdout
     // и не мешаем JSON-ответу
-    console.error(`Note: Found node "${nameOrId}" by name instead of ID. Using node ID: ${nodeByName.id}`);
+    if (process.env.DEBUG === 'true') {
+      console.error(`Note: Found node "${nameOrId}" by name instead of ID. Using node ID: ${nodeByName.id}`);
+    }
     return nodeByName;
   }
   

@@ -116,7 +116,7 @@ It will help identify any connection issues with your n8n instance.
 
 Once set up, you can interact with Claude to manage your n8n workflows. Here are some example prompts:
 
-- "Show me all my n8n workflows"
+- "Show me all my n8n workflows" (returns essential metadata only for performance)
 - "Create a new workflow that runs every day and sends a Slack message"
 - "Help me build an HTTP webhook workflow that processes incoming data"
 - "Update my 'Data Processing' workflow to add an email notification"

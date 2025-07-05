@@ -17,7 +17,7 @@ import {
   ListResourceTemplatesRequestSchema,
   ListPromptsRequestSchema
 } from './sdk-schemas';
-import * as n8nApi from './services/n8nApi';
+import { N8NApiWrapper } from './services/n8nApiWrapper';
 import { WorkflowBuilder } from './services/workflowBuilder';
 import { validateWorkflowSpec } from './utils/validation';
 import logger from './utils/logger';
@@ -40,9 +40,11 @@ interface ToolCallResult {
 class N8NWorkflowServer {
   private server: InstanceType<typeof Server>;
   private isDebugMode: boolean;
+  private n8nWrapper: N8NApiWrapper;
 
   constructor() {
     this.isDebugMode = process.env.DEBUG === 'true';
+    this.n8nWrapper = new N8NApiWrapper();
     
     this.server = new Server(
       { name: 'n8n-workflow-builder', version: '0.3.0' },
@@ -130,7 +132,7 @@ class N8NWorkflowServer {
       
       // Static resources
       if (uri === '/workflows') {
-        const workflows = await n8nApi.listWorkflows();
+        const workflows = await this.n8nWrapper.listWorkflows();
         return {
           contents: [{
             type: 'text',
@@ -143,7 +145,7 @@ class N8NWorkflowServer {
       
       if (uri === '/execution-stats') {
         try {
-          const executions = await n8nApi.listExecutions({ limit: 100 });
+          const executions = await this.n8nWrapper.listExecutions({ limit: 100 });
           
           // Calculate statistics
           const total = executions.data.length;
@@ -206,7 +208,7 @@ class N8NWorkflowServer {
       if (workflowMatch) {
         const id = workflowMatch[1];
         try {
-          const workflow = await n8nApi.getWorkflow(id);
+          const workflow = await this.n8nWrapper.getWorkflow(id);
           return {
             contents: [{
               type: 'text',
@@ -228,7 +230,7 @@ class N8NWorkflowServer {
         }
         
         try {
-          const execution = await n8nApi.getExecution(id, true);
+          const execution = await this.n8nWrapper.getExecution(id, true);
           return {
             contents: [{
               type: 'text',
@@ -256,13 +258,17 @@ class N8NWorkflowServer {
           {
             name: 'list_workflows',
             enabled: true,
-            description: 'List all workflows from n8n',
+            description: 'List all workflows from n8n with essential metadata only (ID, name, status, dates, node count, tags). Optimized for performance to prevent large data transfers.',
             inputSchema: { 
               type: 'object', 
               properties: {
                 random_string: {
                   type: 'string',
                   description: 'Dummy parameter for no-parameter tools'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection (e.g., \'highway\', \'onvex\')'
                 }
               }
             }
@@ -281,6 +287,10 @@ class N8NWorkflowServer {
                 runData: { 
                   type: 'object',
                   description: 'Optional data to pass to the workflow'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -346,6 +356,10 @@ class N8NWorkflowServer {
                     },
                     required: ['source', 'target']
                   }
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['nodes', 'name', 'connections']
@@ -361,6 +375,10 @@ class N8NWorkflowServer {
                 id: { 
                   type: 'string',
                   description: 'The ID of the workflow to retrieve'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -388,6 +406,10 @@ class N8NWorkflowServer {
                 connections: { 
                   type: 'array',
                   description: 'Array of node connections. See create_workflow for detailed structure.'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id', 'name', 'nodes']
@@ -403,6 +425,10 @@ class N8NWorkflowServer {
                 id: { 
                   type: 'string',
                   description: 'The ID of the workflow to delete'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -418,6 +444,10 @@ class N8NWorkflowServer {
                 id: { 
                   type: 'string',
                   description: 'The ID of the workflow to activate'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -433,6 +463,10 @@ class N8NWorkflowServer {
                 id: { 
                   type: 'string',
                   description: 'The ID of the workflow to deactivate'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -471,6 +505,10 @@ class N8NWorkflowServer {
                 cursor: { 
                   type: 'string',
                   description: 'Cursor for pagination'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               }
             }
@@ -489,6 +527,10 @@ class N8NWorkflowServer {
                 includeData: { 
                   type: 'boolean',
                   description: 'Whether to include execution data in the response'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -504,6 +546,10 @@ class N8NWorkflowServer {
                 id: { 
                   type: 'number',
                   description: 'The ID of the execution to delete'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -520,6 +566,10 @@ class N8NWorkflowServer {
                 name: {
                   type: 'string',
                   description: 'The name of the tag to create'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['name']
@@ -539,6 +589,10 @@ class N8NWorkflowServer {
                 limit: {
                   type: 'number',
                   description: 'Maximum number of tags to return'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               }
             }
@@ -553,6 +607,10 @@ class N8NWorkflowServer {
                 id: {
                   type: 'string',
                   description: 'The ID of the tag to retrieve'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -572,6 +630,10 @@ class N8NWorkflowServer {
                 name: {
                   type: 'string',
                   description: 'The new name for the tag'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id', 'name']
@@ -587,6 +649,10 @@ class N8NWorkflowServer {
                 id: {
                   type: 'string',
                   description: 'The ID of the tag to delete'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
                 }
               },
               required: ['id']
@@ -608,7 +674,7 @@ class N8NWorkflowServer {
           switch (toolName) {
             case 'list_workflows':
               try {
-                const workflows = await n8nApi.listWorkflows();
+                const workflows = await this.n8nWrapper.listWorkflows(args.instance);
                 return {
                   content: [{ 
                     type: 'text', 
@@ -625,7 +691,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
               
-              const executionResult = await n8nApi.executeWorkflow(args.id, args.runData);
+              const executionResult = await this.n8nWrapper.executeWorkflow(args.id, args.runData, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -694,7 +760,7 @@ class N8NWorkflowServer {
                 
                 this.log('info', 'Transformed workflow input:', JSON.stringify(workflowInput, null, 2));
                 
-                const createdWorkflow = await n8nApi.createWorkflow(workflowInput);
+                const createdWorkflow = await this.n8nWrapper.createWorkflow(workflowInput, args.instance);
                 
                 this.log('info', 'Workflow created successfully:', JSON.stringify(createdWorkflow, null, 2));
                 
@@ -717,7 +783,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
               
-              const workflow = await n8nApi.getWorkflow(args.id);
+              const workflow = await this.n8nWrapper.getWorkflow(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -781,7 +847,7 @@ class N8NWorkflowServer {
               this.log('info', `Updating workflow with connections: ${JSON.stringify(updateInput.connections)}`);
               
               try {
-                const updatedWorkflow = await n8nApi.updateWorkflow(args.id, updateInput);
+                const updatedWorkflow = await this.n8nWrapper.updateWorkflow(args.id, updateInput, args.instance);
                 return {
                   content: [{ 
                     type: 'text', 
@@ -798,7 +864,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
               
-              const deleteResult = await n8nApi.deleteWorkflow(args.id);
+              const deleteResult = await this.n8nWrapper.deleteWorkflow(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -811,7 +877,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
               
-              const activatedWorkflow = await n8nApi.activateWorkflow(args.id);
+              const activatedWorkflow = await this.n8nWrapper.activateWorkflow(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -824,7 +890,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
               
-              const deactivatedWorkflow = await n8nApi.deactivateWorkflow(args.id);
+              const deactivatedWorkflow = await this.n8nWrapper.deactivateWorkflow(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -834,14 +900,14 @@ class N8NWorkflowServer {
             
             // Execution Tools
             case 'list_executions':
-              const executions = await n8nApi.listExecutions({
+              const executions = await this.n8nWrapper.listExecutions({
                 includeData: args.includeData,
                 status: args.status,
                 workflowId: args.workflowId,
                 projectId: args.projectId,
                 limit: args.limit,
                 cursor: args.cursor
-              });
+              }, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -854,7 +920,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Execution ID is required');
               }
               
-              const execution = await n8nApi.getExecution(args.id, args.includeData);
+              const execution = await this.n8nWrapper.getExecution(args.id, args.includeData, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -867,7 +933,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Execution ID is required');
               }
               
-              const deletedExecution = await n8nApi.deleteExecution(args.id);
+              const deletedExecution = await this.n8nWrapper.deleteExecution(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -881,7 +947,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Tag name is required');
               }
               
-              const createdTag = await n8nApi.createTag({ name: args.name });
+              const createdTag = await this.n8nWrapper.createTag({ name: args.name }, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -900,7 +966,7 @@ class N8NWorkflowServer {
                 tagsOptions.limit = args.limit;
               }
               
-              const tags = await n8nApi.getTags(tagsOptions);
+              const tags = await this.n8nWrapper.getTags(tagsOptions, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -913,7 +979,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Tag ID is required');
               }
               
-              const tag = await n8nApi.getTag(args.id);
+              const tag = await this.n8nWrapper.getTag(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -926,7 +992,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Tag ID and name are required');
               }
               
-              const updatedTag = await n8nApi.updateTag(args.id, { name: args.name });
+              const updatedTag = await this.n8nWrapper.updateTag(args.id, { name: args.name }, args.instance);
               return {
                 content: [{ 
                   type: 'text', 
@@ -939,7 +1005,7 @@ class N8NWorkflowServer {
                 throw new McpError(ErrorCode.InvalidParams, 'Tag ID is required');
               }
               
-              const deletedTag = await n8nApi.deleteTag(args.id);
+              const deletedTag = await this.n8nWrapper.deleteTag(args.id, args.instance);
               return {
                 content: [{ 
                   type: 'text', 

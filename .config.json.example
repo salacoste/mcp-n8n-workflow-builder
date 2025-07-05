@@ -1,0 +1,17 @@
+{
+  "environments": {
+    "production": {
+      "n8n_host": "https://n8n.example.com",
+      "n8n_api_key": "n8n_api_key_for_production"
+    },
+    "staging": {
+      "n8n_host": "https://staging-n8n.example.com", 
+      "n8n_api_key": "n8n_api_key_for_staging"
+    },
+    "development": {
+      "n8n_host": "http://localhost:5678",
+      "n8n_api_key": "n8n_api_key_for_development"
+    }
+  },
+  "defaultEnv": "development"
+}

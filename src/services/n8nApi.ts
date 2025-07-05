@@ -1,10 +1,10 @@
-import axios from 'axios';
-import { N8N_HOST, N8N_API_KEY } from '../config/constants';
+import axios, { AxiosInstance } from 'axios';
 import { WorkflowSpec, WorkflowInput } from '../types/workflow';
 import { ExecutionListOptions } from '../types/execution';
 import { Tag } from '../types/tag';
 import { 
-  N8NWorkflowResponse, 
+  N8NWorkflowResponse,
+  N8NWorkflowSummary,
   N8NExecutionResponse, 
   N8NExecutionListResponse,
   N8NTagResponse,
@@ -12,14 +12,10 @@ import {
 } from '../types/api';
 import logger from '../utils/logger';
 import { validateWorkflowSpec, transformConnectionsToArray } from '../utils/validation';
+import { EnvironmentManager } from './environmentManager';
 
-const api = axios.create({
-  baseURL: N8N_HOST,
-  headers: {
-    'Content-Type': 'application/json',
-    'X-N8N-API-KEY': N8N_API_KEY
-  }
-});
+// Get environment manager instance
+const envManager = EnvironmentManager.getInstance();
 
 /**
  * Helper function to handle API errors consistently
@@ -40,8 +36,9 @@ function handleApiError(context: string, error: unknown): never {
 /**
  * Builds a URL with query parameters
  */
-function buildUrl(path: string, params: Record<string, any> = {}): string {
-  const url = new URL(path, N8N_HOST);
+function buildUrl(path: string, params: Record<string, any> = {}, instanceSlug?: string): string {
+  const envConfig = envManager.getEnvironmentConfig(instanceSlug);
+  const url = new URL(path, envConfig.n8n_host);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       url.searchParams.append(key, String(value));
@@ -53,8 +50,9 @@ function buildUrl(path: string, params: Record<string, any> = {}): string {
 /**
  * Creates a new workflow
  */
-export async function createWorkflow(workflowInput: WorkflowInput): Promise<N8NWorkflowResponse> {
+export async function createWorkflow(workflowInput: WorkflowInput, instanceSlug?: string): Promise<N8NWorkflowResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Creating workflow: ${workflowInput.name}`);
     // Преобразуем входные данные в формат, принимаемый API
     const validatedWorkflow = validateWorkflowSpec(workflowInput);
@@ -160,8 +158,9 @@ function validateWorkflowConfiguration(workflow: WorkflowSpec): void {
 /**
  * Gets a workflow by ID
  */
-export async function getWorkflow(id: string): Promise<N8NWorkflowResponse> {
+export async function getWorkflow(id: string, instanceSlug?: string): Promise<N8NWorkflowResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Getting workflow with ID: ${id}`);
     const response = await api.get(`/workflows/${id}`);
     logger.log(`Retrieved workflow: ${response.data.name}`);
@@ -174,8 +173,9 @@ export async function getWorkflow(id: string): Promise<N8NWorkflowResponse> {
 /**
  * Updates a workflow
  */
-export async function updateWorkflow(id: string, workflowInput: WorkflowInput): Promise<N8NWorkflowResponse> {
+export async function updateWorkflow(id: string, workflowInput: WorkflowInput, instanceSlug?: string): Promise<N8NWorkflowResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Updating workflow with ID: ${id}`);
     // Преобразуем входные данные в формат, принимаемый API
     const validatedWorkflow = validateWorkflowSpec(workflowInput);
@@ -191,11 +191,12 @@ export async function updateWorkflow(id: string, workflowInput: WorkflowInput): 
 /**
  * Deletes a workflow
  */
-export async function deleteWorkflow(id: string): Promise<any> {
+export async function deleteWorkflow(id: string, instanceSlug?: string): Promise<any> {
   try {
-    logger.log();
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log(`Deleting workflow with ID: ${id}`);
     const response = await api.delete(`/workflows/${id}`);
-    logger.log();
+    logger.log(`Deleted workflow with ID: ${id}`);
     return response.data;
   } catch (error) {
     return handleApiError(`deleting workflow with ID ${id}`, error);
@@ -205,12 +206,13 @@ export async function deleteWorkflow(id: string): Promise<any> {
 /**
  * Activates a workflow
  */
-export async function activateWorkflow(id: string): Promise<N8NWorkflowResponse> {
+export async function activateWorkflow(id: string, instanceSlug?: string): Promise<N8NWorkflowResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Activating workflow with ID: ${id}`);
     
     // Получаем текущий рабочий процесс, чтобы получить его полную структуру
-    const workflow = await getWorkflow(id);
+    const workflow = await getWorkflow(id, instanceSlug);
     
     // Улучшенная проверка наличия узла-триггера с учетом атрибута group
     const hasTriggerNode = workflow.nodes.some(node => {
@@ -369,7 +371,7 @@ export async function activateWorkflow(id: string): Promise<N8NWorkflowResponse>
           name: workflow.name,
           nodes: updatedNodes,
           connections: arrayConnections
-        });
+        }, instanceSlug);
         
         logger.log('Updated workflow nodes to fix potential activation issues');
       } catch (updateError) {
@@ -397,11 +399,12 @@ export async function activateWorkflow(id: string): Promise<N8NWorkflowResponse>
 /**
  * Deactivates a workflow
  */
-export async function deactivateWorkflow(id: string): Promise<N8NWorkflowResponse> {
+export async function deactivateWorkflow(id: string, instanceSlug?: string): Promise<N8NWorkflowResponse> {
   try {
-    logger.log();
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log(`Deactivating workflow with ID: ${id}`);
     const response = await api.post(`/workflows/${id}/deactivate`, {});
-    logger.log();
+    logger.log(`Deactivated workflow: ${id}`);
     return response.data;
   } catch (error) {
     return handleApiError(`deactivating workflow with ID ${id}`, error);
@@ -409,14 +412,31 @@ export async function deactivateWorkflow(id: string): Promise<N8NWorkflowRespons
 }
 
 /**
- * Lists all workflows
+ * Lists all workflows with essential metadata only (no nodes/connections)
  */
-export async function listWorkflows(): Promise<N8NWorkflowResponse[]> {
+export async function listWorkflows(instanceSlug?: string): Promise<N8NWorkflowSummary[]> {
   try {
-    logger.log();
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log('Listing workflows');
     const response = await api.get('/workflows');
-    logger.log();
-    return response.data;
+    logger.log(`Retrieved ${response.data.data ? response.data.data.length : 0} workflows`);
+    
+    // Extract workflows from nested response structure
+    const workflows = response.data.data || response.data;
+    
+    // Transform full workflow responses to summaries
+    const workflowSummaries: N8NWorkflowSummary[] = workflows.map((workflow: any) => ({
+      id: workflow.id,
+      name: workflow.name,
+      active: workflow.active,
+      createdAt: workflow.createdAt,
+      updatedAt: workflow.updatedAt,
+      nodeCount: workflow.nodes ? workflow.nodes.length : 0,
+      tags: workflow.tags ? workflow.tags.map((tag: any) => tag.name || tag) : [],
+      // Note: folder information may not be available in list view
+    }));
+    
+    return workflowSummaries;
   } catch (error) {
     return handleApiError('listing workflows', error);
   }
@@ -425,15 +445,16 @@ export async function listWorkflows(): Promise<N8NWorkflowResponse[]> {
 /**
  * Lists executions with optional filters
  */
-export async function listExecutions(options: ExecutionListOptions = {}): Promise<N8NExecutionListResponse> {
+export async function listExecutions(options: ExecutionListOptions = {}, instanceSlug?: string): Promise<N8NExecutionListResponse> {
   try {
-    logger.log();
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log('Listing executions');
     
-    const url = buildUrl('/executions', options);
+    const url = buildUrl('/executions', options, instanceSlug);
     
-    logger.log();
+    logger.log(`Request URL: ${url}`);
     const response = await api.get(url);
-    logger.log();
+    logger.log(`Retrieved ${response.data.data.length} executions`);
     return response.data;
   } catch (error) {
     return handleApiError('listing executions', error);
@@ -443,12 +464,13 @@ export async function listExecutions(options: ExecutionListOptions = {}): Promis
 /**
  * Gets an execution by ID
  */
-export async function getExecution(id: number, includeData?: boolean): Promise<N8NExecutionResponse> {
+export async function getExecution(id: number, includeData?: boolean, instanceSlug?: string): Promise<N8NExecutionResponse> {
   try {
-    logger.log();
-    const url = buildUrl(`/executions/${id}`, includeData ? { includeData: true } : {});
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log(`Getting execution with ID: ${id}`);
+    const url = buildUrl(`/executions/${id}`, includeData ? { includeData: true } : {}, instanceSlug);
     const response = await api.get(url);
-    logger.log();
+    logger.log(`Retrieved execution: ${id}`);
     return response.data;
   } catch (error) {
     return handleApiError(`getting execution with ID ${id}`, error);
@@ -458,11 +480,12 @@ export async function getExecution(id: number, includeData?: boolean): Promise<N
 /**
  * Deletes an execution
  */
-export async function deleteExecution(id: number): Promise<N8NExecutionResponse> {
+export async function deleteExecution(id: number, instanceSlug?: string): Promise<N8NExecutionResponse> {
   try {
-    logger.log();
+    const api = envManager.getApiInstance(instanceSlug);
+    logger.log(`Deleting execution with ID: ${id}`);
     const response = await api.delete(`/executions/${id}`);
-    logger.log();
+    logger.log(`Deleted execution: ${id}`);
     return response.data;
   } catch (error) {
     return handleApiError(`deleting execution with ID ${id}`, error);
@@ -474,18 +497,19 @@ export async function deleteExecution(id: number): Promise<N8NExecutionResponse>
  * @param id The workflow ID
  * @param runData Optional data to pass to the workflow
  */
-export async function executeWorkflow(id: string, runData?: Record<string, any>): Promise<N8NExecutionResponse> {
+export async function executeWorkflow(id: string, runData?: Record<string, any>, instanceSlug?: string): Promise<N8NExecutionResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Manually executing workflow with ID: ${id}`);
     
     // Проверяем активен ли рабочий процесс
     try {
-      const workflow = await getWorkflow(id);
+      const workflow = await getWorkflow(id, instanceSlug);
       
       if (!workflow.active) {
         logger.warn(`Workflow ${id} is not active. Attempting to activate it.`);
         try {
-          await activateWorkflow(id);
+          await activateWorkflow(id, instanceSlug);
           // Ждем существенное время после активации перед выполнением
           logger.log('Waiting for workflow activation to complete (10 seconds)...');
           await new Promise(resolve => setTimeout(resolve, 10000));
@@ -538,8 +562,9 @@ export async function executeWorkflow(id: string, runData?: Record<string, any>)
 /**
  * Создает новый тег
  */
-export async function createTag(tag: { name: string }): Promise<N8NTagResponse> {
+export async function createTag(tag: { name: string }, instanceSlug?: string): Promise<N8NTagResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Creating tag: ${tag.name}`);
     const response = await api.post('/tags', tag);
     logger.log(`Tag created: ${response.data.name}`);
@@ -552,10 +577,11 @@ export async function createTag(tag: { name: string }): Promise<N8NTagResponse> 
 /**
  * Получает список всех тегов
  */
-export async function getTags(options: { limit?: number; cursor?: string } = {}): Promise<N8NTagListResponse> {
+export async function getTags(options: { limit?: number; cursor?: string } = {}, instanceSlug?: string): Promise<N8NTagListResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log('Getting tags list');
-    const url = buildUrl('/tags', options);
+    const url = buildUrl('/tags', options, instanceSlug);
     const response = await api.get(url);
     logger.log(`Found ${response.data.data.length} tags`);
     return response.data;
@@ -567,8 +593,9 @@ export async function getTags(options: { limit?: number; cursor?: string } = {})
 /**
  * Получает тег по ID
  */
-export async function getTag(id: string): Promise<N8NTagResponse> {
+export async function getTag(id: string, instanceSlug?: string): Promise<N8NTagResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Getting tag with ID: ${id}`);
     const response = await api.get(`/tags/${id}`);
     logger.log(`Tag found: ${response.data.name}`);
@@ -581,13 +608,14 @@ export async function getTag(id: string): Promise<N8NTagResponse> {
 /**
  * Обновляет тег
  */
-export async function updateTag(id: string, tag: { name: string }): Promise<N8NTagResponse> {
+export async function updateTag(id: string, tag: { name: string }, instanceSlug?: string): Promise<N8NTagResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Updating tag with ID: ${id}`);
     
     // Сначала проверим, существует ли тег с таким именем
     try {
-      const allTags = await getTags({});
+      const allTags = await getTags({}, instanceSlug);
       const existingTag = allTags.data.find((t: any) => t.name === tag.name);
       
       if (existingTag) {
@@ -612,8 +640,9 @@ export async function updateTag(id: string, tag: { name: string }): Promise<N8NT
 /**
  * Удаляет тег
  */
-export async function deleteTag(id: string): Promise<N8NTagResponse> {
+export async function deleteTag(id: string, instanceSlug?: string): Promise<N8NTagResponse> {
   try {
+    const api = envManager.getApiInstance(instanceSlug);
     logger.log(`Deleting tag with ID: ${id}`);
     const response = await api.delete(`/tags/${id}`);
     logger.log(`Tag deleted: ${id}`);
