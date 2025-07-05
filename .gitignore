@@ -12,8 +12,12 @@ package-lock.json
 .env.test.local
 .env.production.local
 
+# Multi-instance configuration
+.config.json
+
 # Claude MCP files
 cline_mcp_settings.json
+CLAUDE.md
 
 # Build files
 /build
