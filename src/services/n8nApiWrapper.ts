@@ -276,23 +276,33 @@ export class N8NApiWrapper {
         
         const executionMethods = [
           {
+            name: 'executions-post',
+            endpoint: `/executions`,
+            payload: { workflowId: id, ...payload },
+            description: 'Direct execution via executions endpoint'
+          },
+          {
             name: 'webhook-test',
             endpoint: `/webhook-test/${id}`,
+            payload: payload,
             description: 'Webhook test execution'
           },
           {
             name: 'workflows-test', 
             endpoint: `/workflows/${id}/test`,
+            payload: payload,
             description: 'Workflow test execution'
           },
           {
             name: 'workflows-run',
             endpoint: `/workflows/${id}/run`, 
+            payload: payload,
             description: 'Workflow run execution'
           },
           {
             name: 'webhook',
             endpoint: `/webhook/${id}`,
+            payload: payload,
             description: 'Direct webhook execution'
           }
         ];
@@ -302,7 +312,8 @@ export class N8NApiWrapper {
         for (const method of executionMethods) {
           try {
             logger.log(`Trying execution method: ${method.name} - ${method.description}`);
-            const response = await api.post(method.endpoint, payload);
+            logger.log(`Using payload:`, JSON.stringify(method.payload));
+            const response = await api.post(method.endpoint, method.payload);
             logger.log(`Successfully executed workflow ${id} using ${method.name}`);
             return response.data;
           } catch (error) {
