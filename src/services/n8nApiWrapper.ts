@@ -262,10 +262,15 @@ export class N8NApiWrapper {
       
       try {
         logger.log(`Executing workflow with ID: ${id}`);
-        const payload = {
-          workflowId: id,
-          ...runData
+        const payload: any = {
+          workflowId: id
         };
+        
+        // Add optional runData if provided
+        if (runData) {
+          payload.data = runData;
+        }
+        
         const response = await api.post(`/executions`, payload);
         logger.log(`Executed workflow: ${id}`);
         return response.data;
