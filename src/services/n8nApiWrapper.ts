@@ -161,8 +161,18 @@ export class N8NApiWrapper {
       
       try {
         logger.log('Listing workflows');
+        
+        // Debug: Log the actual URL being called
+        console.error(`[DEBUG] Making request to: ${api.defaults.baseURL}/workflows`);
+        console.error(`[DEBUG] Headers:`, api.defaults.headers);
+        
         const response = await api.get('/workflows');
-        logger.log(`API Response:`, JSON.stringify(response.data, null, 2));
+        
+        // Debug: Log the raw response
+        console.error(`[DEBUG] Response status:`, response.status);
+        console.error(`[DEBUG] Response headers:`, response.headers);
+        console.error(`[DEBUG] Response data type:`, typeof response.data);
+        console.error(`[DEBUG] Response data:`, JSON.stringify(response.data, null, 2));
         
         // Extract workflows from the response - n8n API returns {data: [], nextCursor: null}
         const workflows = response.data.data || [];
