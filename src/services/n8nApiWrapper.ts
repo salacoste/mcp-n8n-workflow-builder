@@ -262,8 +262,8 @@ export class N8NApiWrapper {
       
       try {
         logger.log(`Executing workflow with ID: ${id}`);
-        const payload = runData ? { data: runData } : {};
-        const response = await api.post(`/workflows/${id}/execute`, payload);
+        const payload = runData ? runData : {};
+        const response = await api.post(`/workflows/${id}/run`, payload);
         logger.log(`Executed workflow: ${id}`);
         return response.data;
       } catch (error) {
