@@ -162,10 +162,17 @@ export class N8NApiWrapper {
       try {
         logger.log('Listing workflows');
         const response = await api.get('/workflows');
-        logger.log(`Retrieved ${response.data.data ? response.data.data.length : 0} workflows`);
+        logger.log(`API Response:`, JSON.stringify(response.data, null, 2));
         
-        // Extract workflows from nested response structure
-        const workflows = response.data.data || response.data;
+        // Extract workflows from the response - n8n API returns {data: [], nextCursor: null}
+        const workflows = response.data.data || [];
+        
+        if (!Array.isArray(workflows)) {
+          logger.error('Workflows is not an array:', workflows);
+          throw new Error('Invalid response format from n8n API: expected array of workflows');
+        }
+        
+        logger.log(`Retrieved ${workflows.length} workflows`);
         
         // Filter out archived/deleted workflows and transform to summaries
         const workflowSummaries: N8NWorkflowSummary[] = workflows

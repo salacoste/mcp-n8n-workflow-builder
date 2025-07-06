@@ -1103,15 +1103,34 @@ class N8NWorkflowServer {
   async run() {
     // ВАЖНО: Не добавлять вывод в консоль здесь, так как это препятствует работе JSON-RPC через stdin/stdout
     try {
-      // Инициализируем базовый транспорт для stdin/stdout
-      const transport = new StdioServerTransport();
+      // Check if we're running as an MCP subprocess (stdin is a TTY) or standalone
+      const isStandaloneMode = process.env.MCP_STANDALONE === 'true' || process.stdin.isTTY;
       
-      // Запускаем HTTP-сервер с портом из переменной окружения или по умолчанию
-      const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3456;
-      this.startHttpServer(port);
-      
-      // Подключаем сервер к транспорту
-      await this.server.connect(transport);
+      if (isStandaloneMode) {
+        // Standalone mode - only run HTTP server
+        const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3456;
+        await this.startHttpServer(port);
+        this.log('info', `MCP server running in standalone mode on port ${port}`);
+        
+        // Keep the process alive
+        process.on('SIGINT', () => {
+          this.log('info', 'Received SIGINT, shutting down gracefully');
+          process.exit(0);
+        });
+      } else {
+        // MCP subprocess mode - use stdin/stdout transport
+        const transport = new StdioServerTransport();
+        
+        // Also start HTTP server for debugging
+        const port = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT, 10) : 3456;
+        this.startHttpServer(port).catch(error => {
+          // Don't fail if HTTP server can't start in MCP mode
+          this.log('warn', `HTTP server failed to start: ${error.message}`);
+        });
+        
+        // Connect to MCP transport
+        await this.server.connect(transport);
+      }
     } catch (error) {
       // Логируем ошибку в файл
       this.log('error', `Failed to start MCP server: ${error instanceof Error ? error.message : String(error)}`);
