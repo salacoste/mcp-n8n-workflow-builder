@@ -271,24 +271,49 @@ export class N8NApiWrapper {
           node.type === 'n8n-nodes-base.manualTrigger'
         );
         
-        if (hasManualTrigger) {
-          // For workflows with Manual Trigger, use the webhook execution approach
-          // The webhook URL pattern is usually: /webhook-test/{workflowId}
-          const payload = runData || {};
-          
-          logger.log(`Executing workflow with Manual Trigger via webhook: ${id}`);
-          const response = await api.post(`/webhook-test/${id}`, payload);
-          logger.log(`Executed workflow via webhook: ${id}`);
-          return response.data;
-        } else {
-          // For workflows with other triggers, try the standard test endpoint
-          const payload = runData || {};
-          
-          logger.log(`Executing workflow via test endpoint: ${id}`);
-          const response = await api.post(`/workflows/${id}/test`, payload);
-          logger.log(`Executed workflow via test: ${id}`);
-          return response.data;
+        // Try multiple approaches for workflow execution
+        const payload = runData || {};
+        
+        const executionMethods = [
+          {
+            name: 'webhook-test',
+            endpoint: `/webhook-test/${id}`,
+            description: 'Webhook test execution'
+          },
+          {
+            name: 'workflows-test', 
+            endpoint: `/workflows/${id}/test`,
+            description: 'Workflow test execution'
+          },
+          {
+            name: 'workflows-run',
+            endpoint: `/workflows/${id}/run`, 
+            description: 'Workflow run execution'
+          },
+          {
+            name: 'webhook',
+            endpoint: `/webhook/${id}`,
+            description: 'Direct webhook execution'
+          }
+        ];
+        
+        let lastError: any;
+        
+        for (const method of executionMethods) {
+          try {
+            logger.log(`Trying execution method: ${method.name} - ${method.description}`);
+            const response = await api.post(method.endpoint, payload);
+            logger.log(`Successfully executed workflow ${id} using ${method.name}`);
+            return response.data;
+          } catch (error) {
+            logger.log(`Method ${method.name} failed: ${error instanceof Error ? error.message : String(error)}`);
+            lastError = error;
+            // Continue to next method
+          }
         }
+        
+        // If all methods failed, throw the last error
+        throw lastError;
       } catch (error) {
         return this.handleApiError(`executing workflow with ID ${id}`, error);
       }
