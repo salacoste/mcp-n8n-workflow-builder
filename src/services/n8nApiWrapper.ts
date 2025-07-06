@@ -263,14 +263,32 @@ export class N8NApiWrapper {
       try {
         logger.log(`Executing workflow with ID: ${id}`);
         
-        // For manual execution of workflows with Manual Trigger nodes,
-        // we use the test execution endpoint which simulates a manual trigger
-        const payload = runData || {};
+        // First, get the workflow to understand its structure
+        const workflow = await this.getWorkflow(id, instanceSlug);
         
-        // Try the test execution endpoint first (for Manual Trigger workflows)
-        const response = await api.post(`/workflows/${id}/test`, payload);
-        logger.log(`Executed workflow: ${id}`);
-        return response.data;
+        // Check if the workflow has a Manual Trigger node
+        const hasManualTrigger = workflow.nodes?.some(node => 
+          node.type === 'n8n-nodes-base.manualTrigger'
+        );
+        
+        if (hasManualTrigger) {
+          // For workflows with Manual Trigger, use the webhook execution approach
+          // The webhook URL pattern is usually: /webhook-test/{workflowId}
+          const payload = runData || {};
+          
+          logger.log(`Executing workflow with Manual Trigger via webhook: ${id}`);
+          const response = await api.post(`/webhook-test/${id}`, payload);
+          logger.log(`Executed workflow via webhook: ${id}`);
+          return response.data;
+        } else {
+          // For workflows with other triggers, try the standard test endpoint
+          const payload = runData || {};
+          
+          logger.log(`Executing workflow via test endpoint: ${id}`);
+          const response = await api.post(`/workflows/${id}/test`, payload);
+          logger.log(`Executed workflow via test: ${id}`);
+          return response.data;
+        }
       } catch (error) {
         return this.handleApiError(`executing workflow with ID ${id}`, error);
       }
