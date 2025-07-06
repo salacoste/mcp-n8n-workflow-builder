@@ -257,56 +257,55 @@ export class N8NApiWrapper {
   }
 
   async executeWorkflow(id: string, runData?: Record<string, any>, instanceSlug?: string): Promise<N8NExecutionResponse> {
-    return this.callWithInstance(instanceSlug, async () => {
-      const api = this.envManager.getApiInstance(instanceSlug);
+    // Skip the callWithInstance wrapper to avoid unnecessary instance validation
+    // and provide direct helpful guidance about workflow execution limitations
+    
+    try {
+      logger.log(`Workflow execution request for ID: ${id}`);
       
-      try {
-        logger.log(`Attempting to execute workflow with ID: ${id}`);
-        
-        // Based on extensive analysis of successful executions, workflows with 
-        // Manual Trigger nodes are executed through the n8n web interface, not the REST API. 
-        // The REST API does not support direct workflow execution for security/design reasons.
-        
-        logger.log(`Workflow execution via REST API is not supported`);
-        logger.log(`Manual Trigger workflows must be executed through the n8n web interface`);
-        
-        // Return a helpful response indicating the limitation and providing guidance
-        return {
-          id: null,
-          finished: false,
-          mode: 'api_limitation',
-          message: 'Workflow execution via REST API is not supported for Manual Trigger workflows. This is a design limitation of n8n.',
-          workflowId: id,
-          explanation: 'Analysis of successful executions shows they occur through the n8n web interface, not REST API endpoints.',
-          recommendation: 'Use the "Execute Workflow" button in the n8n editor to run this workflow.',
-          alternativeMethods: [
-            'Execute manually via n8n web interface (recommended)',
-            'Convert Manual Trigger to Webhook Trigger for API execution',
-            'Use Schedule Trigger for automatic execution',
-            'Use other trigger types that support API activation'
-          ],
-          howToExecute: {
-            step1: 'Open the n8n web interface',
-            step2: 'Navigate to the workflow',
-            step3: 'Click the "Execute Workflow" button',
-            step4: 'Monitor execution in the executions panel'
-          }
-        };
-      } catch (error) {
-        // If we can't even check the workflow, still provide helpful guidance
-        logger.log(`Error checking workflow ${id}, but providing execution guidance anyway`);
-        return {
-          id: null,
-          finished: false,
-          mode: 'api_limitation',
-          message: 'Workflow execution via REST API is not supported. This is a design limitation of n8n.',
-          workflowId: id,
-          error: error instanceof Error ? error.message : String(error),
-          recommendation: 'Use the n8n web interface to execute workflows manually.',
-          note: 'The REST API is primarily for workflow management, not execution.'
-        };
-      }
-    });
+      // Based on extensive analysis of successful executions, workflows with 
+      // Manual Trigger nodes are executed through the n8n web interface, not the REST API. 
+      // The REST API does not support direct workflow execution for security/design reasons.
+      
+      logger.log(`Workflow execution via REST API is not supported`);
+      logger.log(`Manual Trigger workflows must be executed through the n8n web interface`);
+      
+      // Return a helpful response indicating the limitation and providing guidance
+      return {
+        id: null,
+        finished: false,
+        mode: 'api_limitation',
+        message: 'Workflow execution via REST API is not supported for Manual Trigger workflows. This is a design limitation of n8n.',
+        workflowId: id,
+        explanation: 'Analysis of successful executions shows they occur through the n8n web interface, not REST API endpoints.',
+        recommendation: 'Use the "Execute Workflow" button in the n8n editor to run this workflow.',
+        alternativeMethods: [
+          'Execute manually via n8n web interface (recommended)',
+          'Convert Manual Trigger to Webhook Trigger for API execution',
+          'Use Schedule Trigger for automatic execution',
+          'Use other trigger types that support API activation'
+        ],
+        howToExecute: {
+          step1: 'Open the n8n web interface',
+          step2: 'Navigate to the workflow',
+          step3: 'Click the "Execute Workflow" button',
+          step4: 'Monitor execution in the executions panel'
+        }
+      } as any;
+    } catch (error) {
+      // If we can't even provide guidance, still return helpful information
+      logger.log(`Error in execution guidance for workflow ${id}: ${error}`);
+      return {
+        id: null,
+        finished: false,
+        mode: 'api_limitation',
+        message: 'Workflow execution via REST API is not supported. This is a design limitation of n8n.',
+        workflowId: id,
+        error: error instanceof Error ? error.message : String(error),
+        recommendation: 'Use the n8n web interface to execute workflows manually.',
+        note: 'The REST API is primarily for workflow management, not execution.'
+      } as any;
+    }
   }
 
   // Tag management methods
