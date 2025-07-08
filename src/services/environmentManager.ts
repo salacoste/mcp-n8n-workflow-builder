@@ -26,14 +26,21 @@ export class EnvironmentManager {
       const envConfig = this.configLoader.getEnvironmentConfig(instanceSlug);
       const targetEnv = instanceSlug || this.configLoader.getDefaultEnvironment();
 
+      // Clear cache to force new instances with updated baseURL
+      this.apiInstances.clear();
+
       // Check if we already have an instance for this environment
       if (this.apiInstances.has(targetEnv)) {
         return this.apiInstances.get(targetEnv)!;
       }
 
       // Create new axios instance for this environment
+      const baseURL = `${envConfig.n8n_host}/api/v1`;
+      console.error(`[DEBUG] Creating API instance with baseURL: ${baseURL}`);
+      console.error(`[DEBUG] API Key: ${envConfig.n8n_api_key?.substring(0, 20)}...`);
+      
       const apiInstance = axios.create({
-        baseURL: envConfig.n8n_host,
+        baseURL,
         headers: {
           'Content-Type': 'application/json',
           'X-N8N-API-KEY': envConfig.n8n_api_key
