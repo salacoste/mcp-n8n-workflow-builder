@@ -17,7 +17,8 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 - Interactive workflow building with real-time feedback
 - Backward compatible with existing single-instance setups
 
-![image](https://github.com/user-attachments/assets/b20416f5-3405-4458-8e86-8dbf8948d072)
+![image](https://github.com/user-attachments/assets/e25e86ea-882e-47c4-b822-99f56d1e7f99)
+
 
 ## Requirements
 
