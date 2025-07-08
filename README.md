@@ -4,6 +4,9 @@
 This project provides an MCP (Model Context Protocol) server for managing n8n workflows. It allows you to create, update, delete, activate, and deactivate workflows through a set of tools available in Claude AI and Cursor IDE.
 
 
+![image](https://github.com/user-attachments/assets/6849a1de-6048-474d-8477-5f3fdb854196)
+
+
 ***PLEASE, be aware if you dont limit permissions for actions of MCP, it could remove your workflow***
 
 **Key Features:**
@@ -13,6 +16,8 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 - Predefined workflow templates through prompts system
 - Interactive workflow building with real-time feedback
 - Backward compatible with existing single-instance setups
+
+![image](https://github.com/user-attachments/assets/b20416f5-3405-4458-8e86-8dbf8948d072)
 
 ## Requirements
 
