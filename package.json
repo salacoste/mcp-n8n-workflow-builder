@@ -1,6 +1,7 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
   "version": "0.8.0",
+
   "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE with automated deployment to n8n.informedcrew.com",
   "scripts": {
     "clean": "rm -rf build",
