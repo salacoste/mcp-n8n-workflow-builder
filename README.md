@@ -608,6 +608,10 @@ All commits must follow the conventional commits format:
 
 For more details, see [CONTRIBUTING.md](CONTRIBUTING.md) and [PUBLISHING.md](PUBLISHING.md).
 
+### Important: Workspace Memory Updates
+
+**⚠️ Reminder**: When implementing significant changes like semantic versioning, always check with Cipher to ensure that workspace-specific memories are updated accordingly. This helps maintain accurate project information for AI agents.
+
 ## Version Compatibility
 
 This MCP server has been specifically tested and validated with:

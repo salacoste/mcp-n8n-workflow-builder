@@ -219,6 +219,16 @@ The semantic-release tool automatically:
    - Generates changelog
    - Creates GitHub release
 
+### Important: Update Workspace Memory
+
+**⚠️ When significant changes are made to the project (like semantic versioning implementation, major feature additions, or architectural changes), always remember to:**
+
+1. **Check Cipher workspace-specific memories** to ensure they reflect current project state
+2. **Update workspace memory** with new project details, features, and configurations
+3. **Verify alignment** with general memory requirements and project standards
+
+This ensures that AI agents working with the project have access to current and accurate information about the project's capabilities, structure, and deployment process.
+
 ### Manual Deployment
 
 For testing or emergency deployments:
