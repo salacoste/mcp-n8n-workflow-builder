@@ -1,0 +1,42 @@
+# Conventional Commits - Workflow Deployment Project
+# 
+# This project uses semantic versioning for workflow deployments to n8n.informedcrew.com
+# 
+# Commit Message Format:
+# <type>[optional scope]: <description>
+# 
+# [optional body]
+# 
+# [optional footer(s)]
+# 
+# Types:
+#   feat     - A new feature (workflow, integration, etc.)
+#   fix      - A bug fix
+#   docs     - Documentation only changes
+#   style    - Changes that do not affect the meaning of the code
+#   refactor - A code change that neither fixes a bug nor adds a feature
+#   perf     - A code change that improves performance
+#   test     - Adding missing tests or correcting existing tests
+#   chore    - Changes to the build process or auxiliary tools
+#   workflow - Workflow-specific changes (n8n workflows)
+#   workflow-feat - New workflow features
+#   workflow-fix - Workflow bug fixes
+#   workflow-refactor - Workflow refactoring
+# 
+# Examples:
+#   feat: add new n8n workflow integration
+#   workflow-feat: implement Cipher-Weaviate knowledge search
+#   fix: resolve workflow deployment issue
+#   docs: update API documentation
+#   chore: update dependencies
+# 
+# Breaking Changes:
+#   Use ! after type/scope to indicate breaking change
+#   Example: feat!: breaking change in API
+# 
+# Footer:
+#   BREAKING CHANGE: <description>
+#   Closes #<issue-number>
+# 
+# Write your commit message above this line.
+# Lines starting with # will be ignored.

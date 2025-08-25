@@ -9,7 +9,10 @@
     "start": "node build/index.js",
     "prepublishOnly": "npm run clean && npm run build",
     "publish": "npm publish --access public",
-    "npm-login": "npm login"
+    "npm-login": "npm login",
+    "release": "semantic-release",
+    "release:dry-run": "semantic-release --dry-run",
+    "deploy:workflow": "node scripts/deploy-workflow.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
@@ -20,9 +23,14 @@
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/release-notes-generator": "^14.0.3",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^20.0.0",
+    "semantic-release": "^24.2.7",
     "typescript": "^5.0.0"
   },
   "publishConfig": {
