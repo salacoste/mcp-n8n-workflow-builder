@@ -1,18 +1,18 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
   "version": "0.8.0",
-  "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE",
+  "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE with automated deployment to n8n.informedcrew.com",
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc",
     "dev": "tsc -w",
     "start": "node build/index.js",
-    "prepublishOnly": "npm run clean && npm run build",
-    "publish": "npm publish --access public",
-    "npm-login": "npm login",
     "release": "semantic-release",
     "release:dry-run": "semantic-release --dry-run",
-    "deploy:workflow": "node scripts/deploy-workflow.js"
+    "deploy:workflow": "node scripts/deploy-workflow.js",
+    "deploy:workflow:dry-run": "NODE_ENV=test node scripts/deploy-workflow.js",
+    "version:check": "semantic-release --dry-run --no-ci",
+    "workflow:test": "npm run build && npm run deploy:workflow:dry-run"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
@@ -33,9 +33,7 @@
     "semantic-release": "^24.2.7",
     "typescript": "^5.0.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+
   "bin": {
     "n8n-workflow-builder": "build/index.js"
   },
@@ -47,7 +45,10 @@
     "claude",
     "cursor",
     "ai",
-    "model-context-protocol"
+    "model-context-protocol",
+    "deployment",
+    "semantic-release",
+    "github-actions"
   ],
   "author": "IMD",
   "license": "MIT",
@@ -61,5 +62,10 @@
   "homepage": "https://github.com/salacoste/mcp-n8n-workflow-builder",
   "engines": {
     "node": ">=14.0.0"
+  },
+  "workflowDeployment": {
+    "target": "n8n.informedcrew.com",
+    "versioning": "semantic-release",
+    "automation": "github-actions"
   }
 }
