@@ -568,6 +568,46 @@ If you encounter the error `node.parameters.values.map is not a function` when c
 
 This usually happens when creating workflows with Set nodes that use the newer n8n parameter structure. Version 0.7.2+ includes a fix that supports both the legacy array format and the newer object-based format for Set node parameters.
 
+## Semantic Versioning and Automated Deployment
+
+This project uses semantic versioning with automated deployment to `n8n.informedcrew.com`. The versioning system follows the [Conventional Commits](https://www.conventionalcommits.org/) specification and automatically generates changelogs and releases.
+
+### Version Management
+
+- **Automated Versioning**: Uses semantic-release to automatically determine version bumps based on commit messages
+- **Conventional Commits**: All commits follow the conventional commits format for automatic versioning
+- **Automated Deployment**: Workflows are automatically deployed to `n8n.informedcrew.com` via GitHub Actions
+- **Changelog Generation**: Automatic changelog generation based on commit history
+
+### Commit Message Format
+
+All commits must follow the conventional commits format:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types for workflow deployments:**
+- `feat`: New workflow features (minor version bump)
+- `fix`: Bug fixes in workflows (patch version bump)
+- `workflow-feat`: New workflow functionality (minor version bump)
+- `workflow-fix`: Workflow bug fixes (patch version bump)
+- `workflow-refactor`: Workflow improvements (patch version bump)
+
+### Deployment Process
+
+1. **Development**: Make changes to workflows in the `workflows/` directory
+2. **Commit**: Use conventional commit format for all changes
+3. **Push**: Push to main branch triggers automated deployment
+4. **Deploy**: GitHub Actions automatically deploys to `n8n.informedcrew.com`
+5. **Release**: Semantic-release creates new version and changelog
+
+For more details, see [CONTRIBUTING.md](CONTRIBUTING.md) and [PUBLISHING.md](PUBLISHING.md).
+
 ## Version Compatibility
 
 This MCP server has been specifically tested and validated with:
