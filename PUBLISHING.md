@@ -1,93 +1,128 @@
-# Publishing to npm
+# Automated Workflow Deployment
 
-This guide provides instructions for publishing the n8n Workflow Builder MCP Server package to npm.
+This guide provides instructions for the automated deployment of n8n workflows to `n8n.informedcrew.com` using semantic versioning and GitHub Actions.
 
 ## Prerequisites
 
-Before publishing, make sure you have:
+Before deploying workflows, make sure you have:
 
-1. An npm account (in this case, the package will be published under the `@kernel.salacoste` scope)
-2. Proper access rights to publish to this scope
-3. A properly configured package.json file
-4. All changes committed to git
+1. Access to n8n.informedcrew.com with API permissions
+2. GitHub repository with configured secrets
+3. Properly configured package.json with semantic versioning
+4. All changes committed to git using conventional commits
 
-## Publishing Steps
+## Deployment Process
 
-### 1. Login to npm
+### 1. Configure GitHub Secrets
 
-```bash
-npm login
-```
+Set up the following secrets in your GitHub repository:
 
-Follow the prompts to authenticate with your npm credentials. You may need to provide a one-time password if you have 2FA enabled.
+- `N8N_API_URL`: The n8n instance URL (e.g., `https://n8n.informedcrew.com`)
+- `N8N_API_KEY`: Your n8n API key
+- `N8N_WORKFLOW_ID`: The ID of the workflow to update
 
-### 2. Update Version (if needed)
+### 2. Commit Changes Using Conventional Commits
 
-To update the package version:
-
-```bash
-# For patch updates (bug fixes)
-npm version patch
-
-# For minor updates (new features, backward compatible)
-npm version minor
-
-# For major updates (breaking changes)
-npm version major
-```
-
-This will update the version in package.json and create a git tag.
-
-### 3. Build the Package
-
-The package will be automatically built during publishing due to the `prepublishOnly` script, but you can also build it manually:
+All commits must follow the conventional commits format:
 
 ```bash
-npm run clean && npm run build
+# For new workflow features
+git commit -m "workflow-feat: add new integration workflow"
+
+# For workflow bug fixes
+git commit -m "workflow-fix: resolve authentication error"
+
+# For workflow improvements
+git commit -m "workflow-refactor: optimize search performance"
 ```
 
-### 4. Publish to npm
+### 3. Push to Main Branch
+
+Push your changes to the main branch to trigger automated deployment:
 
 ```bash
-npm publish --access public
+git push origin main
 ```
 
-Or use the npm script:
+### 4. Automated Deployment Process
 
-```bash
-npm run publish
-```
+The GitHub Actions workflow will automatically:
 
-### 5. Verify the Publication
+1. **Build and Test**: Compile the project and run tests
+2. **Deploy Workflow**: Update the workflow in n8n.informedcrew.com
+3. **Create Release**: Generate new version and changelog using semantic-release
+4. **Tag Release**: Create GitHub release with version tag
 
-After publishing, verify that the package is available on npm:
+### 5. Verify Deployment
 
-```
-https://www.npmjs.com/package/@kernel.salacoste/n8n-workflow-builder
-```
+After deployment, verify that the workflow is updated in n8n:
+
+1. Log into n8n.informedcrew.com
+2. Navigate to the updated workflow
+3. Check that changes are reflected
+4. Test the workflow functionality
 
 ## Troubleshooting
 
-### Unable to Login
+### Deployment Failures
 
-If you have issues logging in:
+If deployment fails, check the following:
+
+1. **GitHub Secrets Configuration**
+   - Verify all required secrets are set
+   - Check that API keys are valid and not expired
+   - Ensure workflow ID exists in n8n
+
+2. **Authentication Errors**
+   ```bash
+   # Test API access manually
+   curl -H "X-N8N-API-KEY: your-api-key" \
+        https://n8n.informedcrew.com/api/v1/workflows
+   ```
+
+3. **Workflow Validation Errors**
+   - Check workflow JSON syntax
+   - Verify node configurations
+   - Ensure all required parameters are set
+
+### Version Conflicts
+
+If you encounter version conflicts:
+
+1. **Check existing tags**
+   ```bash
+   git tag --list
+   ```
+
+2. **Verify commit history**
+   ```bash
+   git log --oneline
+   ```
+
+3. **Reset semantic-release if needed**
+   ```bash
+   npm run release:dry-run
+   ```
+
+## Manual Deployment
+
+For emergency deployments or testing:
 
 ```bash
-npm login --registry=https://registry.npmjs.org/
+# Set environment variables
+export N8N_API_URL="https://n8n.informedcrew.com"
+export N8N_API_KEY="your-api-key"
+export N8N_WORKFLOW_ID="your-workflow-id"
+
+# Deploy workflow
+npm run deploy:workflow
 ```
-
-### Publication Errors
-
-Common errors include:
-
-1. **Version already exists**: Update the version in package.json
-2. **Permission denied**: Ensure you have the right access level to publish
-3. **Package name conflicts**: Check that the package name is available and you have rights to publish to that scope
 
 ## Future Updates
 
-To update the package in the future:
+To update workflows in the future:
 
-1. Make your code changes
-2. Update the version using `npm version`
-3. Build and publish as described above 
+1. Make your workflow changes
+2. Commit using conventional commits format
+3. Push to main branch
+4. Automated deployment will handle the rest 

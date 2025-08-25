@@ -1,0 +1,188 @@
+{
+  "name": "Cipher-Weaviate Knowledge Integration",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "search",
+        "responseMode": "responseNode"
+      }
+    },
+    {
+      "id": "decision-router",
+      "name": "Query Router",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.query }}",
+              "operation": "contains",
+              "value2": "project"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "cipher-search",
+      "name": "Cipher Memory Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 200],
+      "parameters": {
+        "url": "https://api.cipher.com/search",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "weaviate-search",
+      "name": "Weaviate Semantic Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 400],
+      "parameters": {
+        "url": "https://weaviate.informedcrew.com/v1/graphql",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "query Search($query: String!) { Get { Article(nearText: { concepts: [$query] }) { title content } } }"
+            },
+            {
+              "name": "variables",
+              "value": "{\"query\": \"{{ $json.query }}\"}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "combine-results",
+      "name": "Combine Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "jsCode": "// Combine results from Cipher and Weaviate searches\nconst cipherResults = $input.all()[0]?.json || [];\nconst weaviateResults = $input.all()[1]?.json || [];\n\n// Merge and rank results\nconst combinedResults = {\n  query: $('webhook-trigger').first().json.query,\n  results: {\n    cipher: cipherResults,\n    weaviate: weaviateResults,\n    combined: [...cipherResults, ...weaviateResults]\n  },\n  timestamp: new Date().toISOString()\n};\n\nreturn [{ json: combinedResults }];"
+      }
+    },
+    {
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "parameters": {
+        "responseCode": 200,
+        "responseMode": "responseBody",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "webhook-trigger": {
+      "main": [
+        [
+          {
+            "node": "decision-router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "decision-router": {
+      "main": [
+        [
+          {
+            "node": "cipher-search",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "weaviate-search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cipher-search": {
+      "main": [
+        [
+          {
+            "node": "combine-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "weaviate-search": {
+      "main": [
+        [
+          {
+            "node": "combine-results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "combine-results": {
+      "main": [
+        [
+          {
+            "node": "response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}
