@@ -47,7 +47,7 @@ class N8NWorkflowServer {
     this.n8nWrapper = new N8NApiWrapper();
 
     this.server = new Server(
-      { name: 'n8n-workflow-builder', version: '0.3.0' },
+      { name: 'n8n-workflow-builder', version: '0.8.1' },
       { capabilities: { tools: {}, resources: {}, prompts: {} } }
     );
     this.setupToolHandlers();
@@ -1176,10 +1176,10 @@ class N8NWorkflowServer {
         
         // Эндпоинт для проверки работы сервера
         app.get('/health', (req: Request, res: Response) => {
-          res.json({ 
-            status: 'ok', 
+          res.json({
+            status: 'ok',
             message: 'MCP server is running',
-            version: '0.3.0'
+            version: '0.8.1'
           });
         });
         

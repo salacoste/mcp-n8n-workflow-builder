@@ -18,6 +18,10 @@ package-lock.json
 # Claude MCP files
 cline_mcp_settings.json
 CLAUDE.md
+AGENTS.md
+.claude/
+.agents/
+.cursorrules
 
 # Build files
 /build
@@ -39,5 +43,9 @@ Thumbs.db
 # IDE files
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
+# BMAD (local only)
+.bmad-core/
+.bmad-*/

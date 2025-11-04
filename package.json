@@ -1,6 +1,6 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE",
   "scripts": {
     "clean": "rm -rf build",
@@ -9,7 +9,10 @@
     "start": "node build/index.js",
     "prepublishOnly": "npm run clean && npm run build",
     "publish": "npm publish --access public",
-    "npm-login": "npm login"
+    "npm-login": "npm login",
+    "bmad:refresh": "bmad-method install -f -i codex",
+    "bmad:list": "bmad-method list:agents",
+    "bmad:validate": "bmad-method validate"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
