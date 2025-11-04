@@ -45,7 +45,7 @@ class N8NWorkflowServer {
   constructor() {
     this.isDebugMode = process.env.DEBUG === 'true';
     this.n8nWrapper = new N8NApiWrapper();
-    
+
     this.server = new Server(
       { name: 'n8n-workflow-builder', version: '0.3.0' },
       { capabilities: { tools: {}, resources: {}, prompts: {} } }
@@ -53,6 +53,7 @@ class N8NWorkflowServer {
     this.setupToolHandlers();
     this.setupResourceHandlers();
     this.setupPromptHandlers();
+    this.setupNotificationHandlers();
     this.server.onerror = (error: any) => this.log('error', `Server error: ${error.message || error}`);
   }
 
@@ -1099,6 +1100,30 @@ class N8NWorkflowServer {
     });
   }
 
+  // Setup notification handlers for MCP protocol notifications
+  private setupNotificationHandlers() {
+    // Initialize notification handlers map if it doesn't exist
+    this.server['_notificationHandlers'] = this.server['_notificationHandlers'] || new Map();
+
+    // Handle notifications/initialized - sent by MCP clients after connection
+    this.server['_notificationHandlers'].set('notifications/initialized', async (notification: any) => {
+      this.log('info', 'MCP client initialized successfully');
+      // No response needed for notifications per JSON-RPC 2.0 spec
+    });
+
+    // Handle notifications/cancelled - sent when client cancels an operation
+    this.server['_notificationHandlers'].set('notifications/cancelled', async (notification: any) => {
+      this.log('info', 'Client cancelled operation', notification.params);
+      // No response needed for notifications
+    });
+
+    // Handle notifications/progress - progress updates from client
+    this.server['_notificationHandlers'].set('notifications/progress', async (notification: any) => {
+      this.log('debug', 'Progress notification received', notification.params);
+      // No response needed for notifications
+    });
+  }
+
   // Запуск MCP сервера
   async run() {
     // ВАЖНО: Не добавлять вывод в консоль здесь, так как это препятствует работе JSON-RPC через stdin/stdout
@@ -1162,11 +1187,17 @@ class N8NWorkflowServer {
         app.post('/mcp', (req: Request, res: Response) => {
           try {
             this.log('debug', 'Received MCP request', req.body);
-            
+
             // Обработка MCP запроса
             this.handleJsonRpcMessage(req.body).then(result => {
-              this.log('debug', 'Sending MCP response', result);
-              res.json(result);
+              // Per JSON-RPC 2.0 spec: notifications return null and should get 204 No Content
+              if (result === null) {
+                this.log('debug', 'Notification processed, sending 204 No Content');
+                res.status(204).end();
+              } else {
+                this.log('debug', 'Sending MCP response', result);
+                res.json(result);
+              }
             }).catch((error: Error) => {
               this.log('error', 'Error handling MCP request', error);
               res.status(500).json({
@@ -1219,28 +1250,52 @@ class N8NWorkflowServer {
   }
   
   private async handleJsonRpcMessage(request: any): Promise<any> {
-    const { method, params, id } = request;
-    
-    // Находим соответствующий обработчик для метода
-    const handler = this.server['_requestHandlers'].get(method);
-    
-    if (!handler) {
-      throw new McpError(ErrorCode.MethodNotFound, `Method '${method}' not found`);
-    }
-    
-    try {
-      // Вызываем соответствующий обработчик с параметрами
-      const result = await handler(request);
-      
-      // Возвращаем результат в формате JSON-RPC
-      return {
-        jsonrpc: '2.0',
-        result,
-        id
-      };
-    } catch (error) {
-      this.log('error', `Handler error: ${error instanceof Error ? error.message : String(error)}`);
-      throw error;
+    const { method, id } = request;
+
+    // Per JSON-RPC 2.0 spec: notifications don't have an 'id' field
+    const isNotification = id === undefined || id === null;
+
+    if (isNotification) {
+      // Handle notification - look in notification handlers
+      const notificationHandler = this.server['_notificationHandlers']?.get(method);
+
+      if (!notificationHandler) {
+        // Per JSON-RPC 2.0: no error response for notifications with unknown methods
+        this.log('warn', `Notification handler not found for method '${method}', ignoring`);
+        return null;
+      }
+
+      try {
+        // Execute notification handler - no response expected
+        await notificationHandler(request);
+        return null; // No response for notifications
+      } catch (error) {
+        // Per JSON-RPC 2.0: errors in notification handlers should be logged but not returned
+        this.log('error', `Notification handler error for '${method}': ${error instanceof Error ? error.message : String(error)}`);
+        return null;
+      }
+    } else {
+      // Handle request - look in request handlers
+      const handler = this.server['_requestHandlers'].get(method);
+
+      if (!handler) {
+        throw new McpError(ErrorCode.MethodNotFound, `Method '${method}' not found`);
+      }
+
+      try {
+        // Execute request handler and return response
+        const result = await handler(request);
+
+        // Return result in JSON-RPC 2.0 format
+        return {
+          jsonrpc: '2.0',
+          result,
+          id
+        };
+      } catch (error) {
+        this.log('error', `Handler error: ${error instanceof Error ? error.message : String(error)}`);
+        throw error;
+      }
     }
   }
 }
