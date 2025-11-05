@@ -633,6 +633,30 @@ If you're using a different version of n8n, some API endpoints or node types may
 - Execution tracking and monitoring
 - Four workflow templates
 
+## 🐛 Found a Bug? Have an Issue?
+
+We're constantly working to improve n8n Workflow Builder MCP Server and make it more reliable for everyone. Your feedback is invaluable!
+
+**If you encounter any bugs, issues, or unexpected behavior:**
+
+👉 **[Open an issue on GitHub](https://github.com/salacoste/mcp-n8n-workflow-builder/issues/new)**
+
+**When reporting an issue, please include:**
+- 📋 A clear description of the problem
+- 🔄 Steps to reproduce the issue
+- 💻 Your environment details (n8n version, Node.js version, OS)
+- 📸 Screenshots or error messages (if applicable)
+- 🎯 Expected vs. actual behavior
+
+**We also welcome:**
+- 💡 Feature requests and suggestions
+- 📚 Documentation improvements
+- 🤝 Pull requests with bug fixes or enhancements
+
+Your contributions help make this tool better for the entire community! 🚀
+
+---
+
 ## License
 
 This project is distributed under the MIT License.
