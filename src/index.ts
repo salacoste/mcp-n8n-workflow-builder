@@ -47,7 +47,7 @@ class N8NWorkflowServer {
     this.n8nWrapper = new N8NApiWrapper();
 
     this.server = new Server(
-      { name: 'n8n-workflow-builder', version: '0.8.1' },
+      { name: 'n8n-workflow-builder', version: '0.8.2' },
       { capabilities: { tools: {}, resources: {}, prompts: {} } }
     );
     this.setupToolHandlers();
@@ -1179,7 +1179,7 @@ class N8NWorkflowServer {
           res.json({
             status: 'ok',
             message: 'MCP server is running',
-            version: '0.8.1'
+            version: '0.8.2'
           });
         });
         

@@ -1,39 +1,33 @@
 # Development files
-src/
-tsconfig.json
-.env
-.env.example
-.gitignore
-.git
-.github/
-
-# IDE files
-.vscode/
-.idea/
-.DS_Store
+.bmad-core/
+.claude/
+.cursor/
+.agents/
+AGENTS.md
+.cursorrules
 
 # Test files
-test/
-*.test.ts
-*.test.js
-
-# Config files
-.eslintrc
-.prettierrc
-jest.config.js
-
-# Docs and examples
-examples/
-docs/
-
-# Debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Personnal config files
-cline_mcp_settings.json 
-
-# Test scripts
 test-*.js
-mcp-test.log 
+TEST_RESULTS.md
+
+# Git files
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# Source files (only ship built files)
+src/
+tsconfig.json
+
+# Development configs
+.env
+.env.*
+.config.json
+.config.local.json
+
+# Documentation
+PR_SUMMARY.md
+NOTIFICATION_FIX_SUMMARY.md
