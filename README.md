@@ -582,7 +582,21 @@ If you're using a different version of n8n, some API endpoints or node types may
 
 ## Changelog
 
-### 0.8.0 (Current)
+### 0.9.0 (Current)
+- **🎯 MCP Protocol Compliance** - Full support for MCP notification handlers
+- **✅ Fixed critical bug** - Resolved "Method 'notifications/initialized' not found" error that prevented VS Code and other MCP clients from connecting
+- **🔔 Notification Support** - Implemented proper handling for:
+  - `notifications/initialized` - Client initialization notifications
+  - `notifications/cancelled` - Operation cancellation notifications
+  - `notifications/progress` - Progress update notifications
+- **📡 JSON-RPC 2.0 Compliance** - Proper distinction between notifications (no `id` field) and requests (with `id` field)
+- **📤 HTTP Response Handling** - Return `204 No Content` for notifications and `200 OK` with JSON for requests
+- **✨ Backward Compatibility** - Zero breaking changes, all existing functionality preserved (14/14 core tests passed)
+- **📦 Package Optimization** - Added `.npmignore` to reduce package size from 1.3MB to 278KB
+- **🧪 Comprehensive Testing** - Added test suite with 18 integration tests covering all MCP functionality
+- **📚 Enhanced Documentation** - Added bug reporting section and detailed fix documentation
+
+### 0.8.0
 - **🎉 Multi-instance support** - Manage multiple n8n environments (production, staging, development)
 - Added `.config.json` configuration format for multiple n8n instances
 - All MCP tools now support optional `instance` parameter for environment targeting
