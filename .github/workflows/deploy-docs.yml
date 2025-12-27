@@ -33,7 +33,7 @@ jobs:
           fetch-depth: 0  # Full history for git-revision-date plugin
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -53,13 +53,13 @@ jobs:
           mkdocs build --strict --verbose
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
 
       - name: Deployment Summary
         run: |
