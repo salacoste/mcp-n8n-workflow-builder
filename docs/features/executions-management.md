@@ -725,7 +725,7 @@ Execution #100 (failed)
 - **[Workflows Management](workflows-management.md)** - Manage workflows
 - **[Tags Management](tags-management.md)** - Organize with tags
 - **[API Reference](../api/executions-api.md)** - Technical specifications
-- **[Troubleshooting](../examples/troubleshooting.md)** - Debug execution issues
+- **[Troubleshooting](../troubleshooting/error-reference.md)** - Debug execution issues
 
 ---
 

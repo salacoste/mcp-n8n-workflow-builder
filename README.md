@@ -77,15 +77,15 @@ Create a `.config.json` file in the project root for managing multiple n8n envir
 {
   "environments": {
     "production": {
-      "n8n_host": "https://n8n.example.com/api/v1/",
+      "n8n_host": "https://n8n.example.com",
       "n8n_api_key": "n8n_api_key_for_production"
     },
     "staging": {
-      "n8n_host": "https://staging-n8n.example.com/api/v1/", 
+      "n8n_host": "https://staging-n8n.example.com",
       "n8n_api_key": "n8n_api_key_for_staging"
     },
     "development": {
-      "n8n_host": "http://localhost:5678/api/v1/",
+      "n8n_host": "http://localhost:5678",
       "n8n_api_key": "n8n_api_key_for_development"
     }
   },
@@ -98,11 +98,124 @@ Create a `.config.json` file in the project root for managing multiple n8n envir
 Create an `.env` file in the project root with the following variables:
 
 ```
-N8N_HOST=https://your-n8n-instance.com/api/v1/
+N8N_HOST=https://your-n8n-instance.com
 N8N_API_KEY=your_api_key_here
 ```
 
 **Note:** The system automatically falls back to `.env` configuration if no `.config.json` is found, ensuring backward compatibility.
+
+## Configuration Best Practices
+
+### Correct URL Format
+
+The n8n MCP server automatically appends `/api/v1` to your configured base URL. **Always provide the base URL without `/api/v1`**:
+
+**✅ Correct Examples:**
+
+```json
+{
+  "n8n_host": "https://n8n.example.com",
+  "n8n_api_key": "your_api_key"
+}
+```
+
+```json
+{
+  "n8n_host": "http://localhost:5678",
+  "n8n_api_key": "your_api_key"
+}
+```
+
+```json
+{
+  "n8n_host": "https://your-instance.app.n8n.cloud",
+  "n8n_api_key": "your_api_key"
+}
+```
+
+**❌ Incorrect Examples (will cause duplicate paths):**
+
+```json
+{
+  "n8n_host": "https://n8n.example.com/api/v1/",  // ❌ Don't include /api/v1
+  "n8n_api_key": "your_api_key"
+}
+```
+
+### Why This Matters
+
+The server constructs the full API URL by appending `/api/v1` to your base URL:
+
+```
+Base URL: https://n8n.example.com
+Final URL: https://n8n.example.com/api/v1/workflows  ✅
+
+Base URL: https://n8n.example.com/api/v1/
+Final URL: https://n8n.example.com/api/v1/api/v1/workflows  ❌
+```
+
+### Backward Compatibility
+
+**Note for Existing Users:** If you have an existing configuration with `/api/v1` in the URL, it will continue to work. The server automatically detects and removes duplicate `/api/v1` paths. However, we recommend updating to the correct format for clarity.
+
+### Official n8n API Documentation
+
+For more information about n8n API endpoints and URL structure, refer to:
+- [n8n API Documentation](https://docs.n8n.io/api/)
+- [n8n REST API Reference](https://docs.n8n.io/api/api-reference/)
+
+## Migrating from Old URL Configuration Format
+
+If you have an existing configuration that includes `/api/v1` in the URL, you have two options:
+
+### Option 1: Continue Using Current Configuration (Recommended for Quick Start)
+
+Your existing configuration will continue to work due to backward compatibility:
+
+```json
+{
+  "n8n_host": "https://n8n.example.com/api/v1/",  // Still works!
+  "n8n_api_key": "your_api_key"
+}
+```
+
+The server automatically normalizes the URL internally.
+
+### Option 2: Update to New Format (Recommended for Clarity)
+
+Update your configuration to match the official n8n API documentation:
+
+**Before:**
+```json
+{
+  "environments": {
+    "production": {
+      "n8n_host": "https://n8n.example.com/api/v1/",
+      "n8n_api_key": "your_api_key"
+    }
+  }
+}
+```
+
+**After:**
+```json
+{
+  "environments": {
+    "production": {
+      "n8n_host": "https://n8n.example.com",
+      "n8n_api_key": "your_api_key"
+    }
+  }
+}
+```
+
+**Steps:**
+1. Open your `.config.json` or `.env` file
+2. Remove `/api/v1` and any trailing slashes from `n8n_host` values
+3. Save the file
+4. Restart the MCP server
+
+No code changes or additional configuration needed!
 
 ### 5. Build and Run
 
@@ -189,9 +302,9 @@ Then edit the file, providing the correct environment variable values:
 
 ### MCP Tools
 
-The following tools are available through the MCP protocol:
+The following **17 tools** are available through the MCP protocol:
 
-#### Workflow Management
+#### Workflow Management (8 tools)
 - **list_workflows**: Displays a streamlined list of workflows with essential metadata only (ID, name, status, dates, node count, tags). Optimized for performance to prevent large data transfers.
 - **create_workflow**: Creates a new workflow in n8n.
 - **get_workflow**: Gets complete workflow details by its ID (includes nodes and connections).
@@ -199,19 +312,28 @@ The following tools are available through the MCP protocol:
 - **delete_workflow**: Deletes a workflow by its ID.
 - **activate_workflow**: Activates a workflow by its ID.
 - **deactivate_workflow**: Deactivates a workflow by its ID.
-- **execute_workflow**: Manually executes a workflow by its ID.
+- **execute_workflow**: Provides guidance for workflow execution (manual trigger workflows must be executed through n8n UI).
 
-#### Execution Management
+#### Execution Management (4 tools)
 - **list_executions**: Displays a list of all workflow executions with filtering capabilities.
 - **get_execution**: Gets details of a specific execution by its ID.
 - **delete_execution**: Deletes an execution record by its ID.
+- **retry_execution**: Retries a failed workflow execution by its ID (creates new execution as retry of original).
 
-#### Tag Management
+#### Tag Management (5 tools)
 - **create_tag**: Creates a new tag.
 - **get_tags**: Gets a list of all tags.
 - **get_tag**: Gets tag details by its ID.
 - **update_tag**: Updates an existing tag.
 - **delete_tag**: Deletes a tag by its ID.
+
+#### Credential Management (6 tools)
+- **list_credentials**: Provides security guidance (n8n blocks credential listing for security - use UI instead).
+- **get_credential**: Provides security guidance and alternatives (n8n blocks credential reading for security).
+- **create_credential**: Creates new credentials for external service authentication (supports httpBasicAuth, OAuth2, etc.).
+- **update_credential**: Provides immutability guidance and DELETE + CREATE workaround pattern.
+- **delete_credential**: Deletes a credential by its ID permanently.
+- **get_credential_schema**: Gets JSON schema for credential types to understand required fields before creation.
 
 ### Multi-Instance Support
 
@@ -229,6 +351,75 @@ The following tools are available through the MCP protocol:
 - If no `instance` parameter is provided, the default environment is used
 - Available instances are defined in your `.config.json` file
 - For single-instance setups (using `.env`), the instance parameter is ignored
+
+## 🎯 n8n REST API Coverage
+
+MCP сервер n8n-workflow-builder обеспечивает **83% покрытие** официального n8n REST API v1.
+
+### Поддерживаемые категории API
+
+| Категория | Методов | Реализовано | Покрытие |
+|-----------|---------|-------------|----------|
+| **Workflows** | 8 | 6 полностью, 2 частично | 75% |
+| **Executions** | 4 | 4 полностью | **100%** ✅ |
+| **Credentials** | 6 | 4 полностью, 2 частично | 67% |
+| **Tags** | 5 | 5 полностью | **100%** ✅ |
+| **ИТОГО** | **23** | **19** полностью, **4** частично | **83%** |
+
+### Статус реализации
+
+#### ✅ Полностью реализовано (19 методов)
+
+**Workflows (6):**
+- `list_workflows` - Список workflows с метаданными
+- `get_workflow` - Получение workflow по ID
+- `create_workflow` - Создание нового workflow
+- `update_workflow` - Полное обновление workflow
+- `patch_workflow` - Частичное обновление workflow
+- `delete_workflow` - Удаление workflow
+
+**Executions (4):**
+- `list_executions` - Список выполнений с фильтрами
+- `get_execution` - Получение execution по ID
+- `delete_execution` - Удаление execution
+- `retry_execution` - Повтор failed execution
+
+**Credentials (4):**
+- `list_credentials` - Список credentials (только метаданные)
+- `create_credential` - Создание credential
+- `delete_credential` - Удаление credential
+- `get_credential_schema` - Получение JSON schema для типа credential
+
+**Tags (5):**
+- `get_tags` - Список всех tags
+- `get_tag` - Получение tag по ID
+- `create_tag` - Создание нового tag
+- `update_tag` - Обновление tag
+- `delete_tag` - Удаление tag
+
+#### ⚠️ Частично реализовано (4 метода)
+
+**Workflows (2):**
+- `activate_workflow` - ⚠️ n8n API v2.0.3 не поддерживает программную активацию
+  - **Альтернатива:** Активация через n8n web UI
+- `deactivate_workflow` - ⚠️ n8n API v2.0.3 не поддерживает программную деактивацию
+  - **Альтернатива:** Деактивация через n8n web UI
+
+**Credentials (2):**
+- `get_credential` - ⚠️ n8n блокирует по соображениям безопасности
+  - **Альтернатива:** Использовать `list_credentials` для метаданных
+- `update_credential` - ⚠️ Immutability pattern для защиты секретов
+  - **Альтернатива:** DELETE + CREATE pattern
+
+> **Примечание:** Все частично реализованные методы возвращают информативные guidance сообщения с объяснением ограничений и альтернативными решениями.
+
+### 📊 Детальная документация
+
+Для детального анализа покрытия API см.:
+- [API Coverage Analysis](./docs/API-COVERAGE-ANALYSIS.md) - Детальный анализ всех методов
+- [API Methods Checklist](./docs/API-METHODS-CHECKLIST.md) - Быстрый справочник
+- [API Coverage Visual](./docs/API-COVERAGE-VISUAL.md) - Визуальная сводка с диаграммами
+- [n8n API Documentation](./docs/n8n-api-docs/) - Локальная документация n8n API
 
 All tools have been tested and optimized for n8n version 1.82.3. The node types and API structures used are compatible with this version.
 
@@ -332,7 +523,7 @@ If you're currently using a single-instance setup with `.env` and want to migrat
    {
      "environments": {
        "default": {
-         "n8n_host": "https://your-existing-n8n.com/api/v1/",
+         "n8n_host": "https://your-existing-n8n.com",
          "n8n_api_key": "your_existing_api_key"
        }
      },
@@ -345,11 +536,11 @@ If you're currently using a single-instance setup with `.env` and want to migrat
    {
      "environments": {
        "default": {
-         "n8n_host": "https://your-existing-n8n.com/api/v1/",
+         "n8n_host": "https://your-existing-n8n.com",
          "n8n_api_key": "your_existing_api_key"
        },
        "staging": {
-         "n8n_host": "https://staging-n8n.com/api/v1/",
+         "n8n_host": "https://staging-n8n.com",
          "n8n_api_key": "staging_api_key"
        }
      },
@@ -375,6 +566,84 @@ await listWorkflows("production");
 // Create workflow in staging environment
 await createWorkflow(workflowData, "staging");
 ```
+
+### Credential Management Examples
+
+The server provides comprehensive credential lifecycle management with a schema-driven approach:
+
+#### Schema-Driven Credential Creation
+
+```javascript
+// Step 1: Get schema to understand required fields
+const schema = await getCredentialSchema("httpBasicAuth");
+// Returns: { type: "object", properties: { user: {...}, password: {...} } }
+
+// Step 2: Create credential with validated data
+const credential = await createCredential({
+  name: "My API Credential",
+  type: "httpBasicAuth",
+  data: {
+    user: "myusername",
+    password: "mypassword"
+  }
+});
+// Returns: { id: "cred-id", name: "My API Credential", type: "httpBasicAuth", ... }
+```
+
+#### Complete Credential Lifecycle
+
+```javascript
+// 1. Discover credential types and requirements
+const schema = await getCredentialSchema("httpHeaderAuth");
+
+// 2. Create new credential
+const cred = await createCredential({
+  name: "Production API Key",
+  type: "httpHeaderAuth",
+  data: {
+    name: "X-API-Key",
+    value: "prod-key-12345"
+  }
+});
+
+// 3. Use in workflows (credentials appear automatically in node dropdowns)
+
+// 4. Update credential (using DELETE + CREATE pattern for immutability)
+await deleteCredential(cred.id);
+const updatedCred = await createCredential({
+  name: "Production API Key",
+  type: "httpHeaderAuth",
+  data: {
+    name: "X-API-Key",
+    value: "new-key-67890"
+  }
+});
+
+// 5. Clean up when no longer needed
+await deleteCredential(updatedCred.id);
+```
+
+#### Multi-Instance Credential Management
+
+```javascript
+// Create credentials in different environments
+const prodCred = await createCredential({
+  name: "Production OAuth",
+  type: "oAuth2Api",
+  data: { /* OAuth2 configuration */ }
+}, "production");
+
+const stagingCred = await createCredential({
+  name: "Staging OAuth",
+  type: "oAuth2Api",
+  data: { /* OAuth2 configuration */ }
+}, "staging");
+```
+
+**Note on Security:**
+- `list_credentials` and `get_credential` are blocked by n8n for security (returns informative guidance)
+- Use n8n web interface to view existing credentials
+- Credentials are automatically encrypted by n8n when created
 
 ### Claude AI Examples
 
@@ -456,6 +725,57 @@ node test-workflow.js
 
 ### Common Errors and Solutions
 
+#### URL Configuration Issues
+
+**Symptom:** API calls fail with 404 errors or "not found" messages
+
+**Possible Cause:** Incorrect URL format causing duplicate `/api/v1` paths
+
+**Solution:**
+
+1. **Check your configuration file** (`.config.json` or `.env`)
+
+   Ensure your `n8n_host` does NOT include `/api/v1`:
+
+   ```json
+   {
+     "n8n_host": "https://n8n.example.com"  // ✅ Correct
+   }
+   ```
+
+   NOT:
+
+   ```json
+   {
+     "n8n_host": "https://n8n.example.com/api/v1/"  // ❌ Will be auto-normalized
+   }
+   ```
+
+2. **Enable debug logging** to see URL construction:
+
+   ```bash
+   DEBUG=true npm start
+   ```
+
+   Look for lines like:
+   ```
+   [EnvironmentManager] Original URL: https://n8n.example.com/api/v1/
+   [EnvironmentManager] Normalized baseURL: https://n8n.example.com/api/v1
+   ```
+
+3. **Verify n8n instance is accessible:**
+
+   ```bash
+   curl https://your-n8n-host/api/v1/workflows \
+     -H "X-N8N-API-KEY: your_api_key"
+   ```
+
+4. **Check trailing slashes:**
+
+   Both of these are acceptable and will be normalized:
+   - `https://n8n.example.com` ✅
+   - `https://n8n.example.com/` ✅
+
 #### Port Already in Use (EADDRINUSE)
 
 If you see the following error in logs:
@@ -529,7 +849,7 @@ If you need to run multiple instances of the n8n workflow builder server (for ex
          "command": "node",
          "args": ["path/to/build/index.js"],
          "env": {
-           "N8N_HOST": "https://production-n8n.example.com/api/v1/",
+           "N8N_HOST": "https://production-n8n.example.com",
            "N8N_API_KEY": "your_prod_api_key",
            "MCP_PORT": "58921"
          }
@@ -538,7 +858,7 @@ If you need to run multiple instances of the n8n workflow builder server (for ex
          "command": "node",
          "args": ["path/to/build/index.js"],
          "env": {
-           "N8N_HOST": "https://dev-n8n.example.com/api/v1/",
+           "N8N_HOST": "https://dev-n8n.example.com",
            "N8N_API_KEY": "your_dev_api_key",
            "MCP_PORT": "58922"
          }
@@ -582,7 +902,33 @@ If you're using a different version of n8n, some API endpoints or node types may
 
 ## Changelog
 
-### 0.9.0 (Current)
+### 0.9.1 (Current)
+
+**🐛 Bug Fixes:**
+- **URL Configuration Normalization** - Fixed URL path duplication issue where user configurations containing `/api/v1` resulted in duplicate path segments (`/api/v1/api/v1/`)
+  - Server now intelligently detects and normalizes URLs regardless of format
+  - Maintains full backward compatibility with existing configurations
+  - Thanks to user bug report: "The Host URL should not be appended with /api/v1 as the URL Builder will append that automatically"
+
+**📚 Documentation:**
+- **Configuration Best Practices** - Added comprehensive guide on correct URL format
+- **Updated All Examples** - Corrected all configuration examples to match official n8n API documentation
+- **Migration Guide** - Added guidance for users with existing configurations
+- **Troubleshooting** - Enhanced troubleshooting section with URL configuration issues
+- All examples now align with official n8n API documentation format
+
+**✨ Features:**
+- **Smart URL Detection** - Automatic normalization of user-provided URLs for maximum compatibility
+- **Enhanced Debug Logging** - Shows both original and normalized URLs when `DEBUG=true`
+
+**🔧 Technical Changes:**
+- Updated `src/services/environmentManager.ts` to include URL normalization logic
+- Added inline documentation explaining normalization process
+- Improved error handling transparency
+- Added comprehensive unit test suite (22+ test cases)
+- Singleton caching pattern optimization
+
+### 0.9.0
 - **🎯 MCP Protocol Compliance** - Full support for MCP notification handlers
 - **✅ Fixed critical bug** - Resolved "Method 'notifications/initialized' not found" error that prevented VS Code and other MCP clients from connecting
 - **🔔 Notification Support** - Implemented proper handling for:

@@ -489,15 +489,6 @@ You: "Add a Slack notification when the webhook receives a 'payment.failed' even
 
 ---
 
-## Related Examples
-
-- [Webhook with Authentication](./webhook-with-auth.md)
-- [Webhook to Slack](../integrations/slack-notifications.md)
-- [Webhook to Database](../integrations/database-operations.md)
-- [Advanced Error Handling](../advanced/error-handling.md)
-
----
-
 ## Key Takeaways
 
 ✅ **Learned:**

@@ -553,10 +553,10 @@ create_credential({
 
 - [Workflows Management](workflows-management.md) - Use credentials in workflows
 - [API Reference](../api/credentials-api.md) - Technical details
-- [Security Guide](../examples/troubleshooting.md#security) - Advanced security
+- [Error Reference](../troubleshooting/error-reference.md) - Security troubleshooting
 
 ---
 
 !!! question "Need Help?"
-    - [Examples](../examples/workflows/integrations.md)
+    - [FAQ](../troubleshooting/faq.md)
     - [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)

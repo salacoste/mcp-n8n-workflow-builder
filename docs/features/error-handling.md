@@ -335,7 +335,7 @@ When reporting issues, include:
 ### Resources
 
 - [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues) - Report bugs
-- [Examples](../examples/troubleshooting.md) - Common solutions
+- [Examples](../troubleshooting/error-reference.md) - Common solutions
 - [API Reference](../api/overview.md) - Technical details
 
 ---
@@ -344,7 +344,7 @@ When reporting issues, include:
 
 - [Workflows Management](workflows-management.md) - Create robust workflows
 - [Executions Management](executions-management.md) - Monitor and retry
-- [Examples](../examples/troubleshooting.md) - Real-world solutions
+- [Examples](../troubleshooting/error-reference.md) - Real-world solutions
 
 ---
 

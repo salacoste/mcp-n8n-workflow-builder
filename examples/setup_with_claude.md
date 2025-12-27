@@ -30,9 +30,11 @@ npm install @kernel.salacoste/n8n-workflow-builder
 Create a `.env` file in the project directory with the following content:
 
 ```
-N8N_HOST=https://your-n8n-instance.com/api/v1/
+N8N_HOST=https://your-n8n-instance.com
 N8N_API_KEY=your_api_key_here
 ```
+
+**Important:** Provide the base URL without `/api/v1`. The server automatically appends `/api/v1` to construct the full API endpoint.
 
 Replace the values with your actual n8n host URL and API key.
 
@@ -48,8 +50,8 @@ Create a configuration file for Claude to access the MCP server:
   "n8n-workflow-builder": {
     "command": "n8n-workflow-builder",
     "env": {
-      "N8N_HOST": "https://your-n8n-instance.com/api/v1/",
-      "N8N_API_KEY": "your_api_key_here" 
+      "N8N_HOST": "https://your-n8n-instance.com",
+      "N8N_API_KEY": "your_api_key_here"
     },
     "disabled": false,
     "alwaysAllow": [
@@ -78,7 +80,7 @@ If you installed as a local dependency, use:
     "command": "node",
     "args": ["/path/to/your/project/build/index.js"],
     "env": {
-      "N8N_HOST": "https://your-n8n-instance.com/api/v1/",
+      "N8N_HOST": "https://your-n8n-instance.com",
       "N8N_API_KEY": "your_api_key_here"
     },
     "disabled": false,

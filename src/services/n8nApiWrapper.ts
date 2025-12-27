@@ -2,13 +2,15 @@ import axios from 'axios';
 import { EnvironmentManager } from './environmentManager';
 import { WorkflowInput } from '../types/workflow';
 import { ExecutionListOptions } from '../types/execution';
-import { 
+import {
   N8NWorkflowResponse,
   N8NWorkflowSummary,
-  N8NExecutionResponse, 
+  N8NExecutionResponse,
   N8NExecutionListResponse,
   N8NTagResponse,
-  N8NTagListResponse
+  N8NTagListResponse,
+  N8NCredentialResponse,
+  N8NCredentialListResponse
 } from '../types/api';
 import logger from '../utils/logger';
 import { validateWorkflowSpec, transformConnectionsToArray } from '../utils/validation';
@@ -91,16 +93,33 @@ export class N8NApiWrapper {
   async updateWorkflow(id: string, workflowInput: WorkflowInput, instanceSlug?: string): Promise<N8NWorkflowResponse> {
     return this.callWithInstance(instanceSlug, async () => {
       const api = this.envManager.getApiInstance(instanceSlug);
-      
+
       try {
         logger.log(`Updating workflow with ID: ${id}`);
         const validatedWorkflow = validateWorkflowSpec(workflowInput);
-        
+
         const response = await api.put(`/workflows/${id}`, validatedWorkflow);
         logger.log(`Updated workflow: ${response.data.name}`);
         return response.data;
       } catch (error) {
         return this.handleApiError(`updating workflow with ID ${id}`, error);
+      }
+    });
+  }
+
+  async patchWorkflow(id: string, partialUpdate: Partial<WorkflowInput>, instanceSlug?: string): Promise<N8NWorkflowResponse> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Partially updating workflow with ID: ${id}`);
+        logger.log(`Partial update fields: ${Object.keys(partialUpdate).join(', ')}`);
+
+        const response = await api.patch(`/workflows/${id}`, partialUpdate);
+        logger.log(`Patched workflow: ${response.data.name}`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError(`patching workflow with ID ${id}`, error);
       }
     });
   }
@@ -122,51 +141,51 @@ export class N8NApiWrapper {
 
   async activateWorkflow(id: string, instanceSlug?: string): Promise<N8NWorkflowResponse> {
     return this.callWithInstance(instanceSlug, async () => {
-      const api = this.envManager.getApiInstance(instanceSlug);
-      
-      try {
-        logger.log(`Activating workflow with ID: ${id}`);
-        
-        // Get the workflow first to check if it has triggers
-        const workflow = await this.getWorkflow(id, instanceSlug);
-        
-        const response = await api.patch(`/workflows/${id}`, { active: true });
-        logger.log(`Activated workflow: ${response.data.name}`);
-        return response.data;
-      } catch (error) {
-        return this.handleApiError(`activating workflow with ID ${id}`, error);
-      }
+      logger.log(`Workflow activation via REST API is not supported in this n8n version`);
+      logger.log(`n8n version 2.0.3 does not provide programmatic workflow activation through the API`);
+
+      throw new Error(
+        `Workflow activation via REST API is not supported. ` +
+        `The 'active' field is read-only in n8n v2.0.3 API. ` +
+        `Please activate workflows manually through the n8n web interface: ` +
+        `Navigate to your workflow and click the "Active" toggle.`
+      );
     });
   }
 
   async deactivateWorkflow(id: string, instanceSlug?: string): Promise<N8NWorkflowResponse> {
     return this.callWithInstance(instanceSlug, async () => {
-      const api = this.envManager.getApiInstance(instanceSlug);
-      
-      try {
-        logger.log(`Deactivating workflow with ID: ${id}`);
-        
-        const response = await api.patch(`/workflows/${id}`, { active: false });
-        logger.log(`Deactivated workflow: ${response.data.name}`);
-        return response.data;
-      } catch (error) {
-        return this.handleApiError(`deactivating workflow with ID ${id}`, error);
-      }
+      logger.log(`Workflow deactivation via REST API is not supported in this n8n version`);
+      logger.log(`n8n version 2.0.3 does not provide programmatic workflow deactivation through the API`);
+
+      throw new Error(
+        `Workflow deactivation via REST API is not supported. ` +
+        `The 'active' field is read-only in n8n v2.0.3 API. ` +
+        `Please deactivate workflows manually through the n8n web interface: ` +
+        `Navigate to your workflow and click the "Active" toggle to disable it.`
+      );
     });
   }
 
-  async listWorkflows(instanceSlug?: string): Promise<N8NWorkflowSummary[]> {
+  async listWorkflows(instanceSlug?: string, active?: boolean): Promise<N8NWorkflowSummary[]> {
     return this.callWithInstance(instanceSlug, async () => {
       const api = this.envManager.getApiInstance(instanceSlug);
-      
+
       try {
         logger.log('Listing workflows');
-        
+
+        // Build query parameters
+        const params: any = {};
+        if (active !== undefined) {
+          params.active = active;
+        }
+
         // Debug: Log the actual URL being called
         console.error(`[DEBUG] Making request to: ${api.defaults.baseURL}/workflows`);
         console.error(`[DEBUG] Headers:`, api.defaults.headers);
-        
-        const response = await api.get('/workflows');
+        console.error(`[DEBUG] Query params:`, params);
+
+        const response = await api.get('/workflows', { params });
         
         // Debug: Log the raw response
         console.error(`[DEBUG] Response status:`, response.status);
@@ -244,7 +263,7 @@ export class N8NApiWrapper {
   async deleteExecution(id: number, instanceSlug?: string): Promise<N8NExecutionResponse> {
     return this.callWithInstance(instanceSlug, async () => {
       const api = this.envManager.getApiInstance(instanceSlug);
-      
+
       try {
         logger.log(`Deleting execution with ID: ${id}`);
         const response = await api.delete(`/executions/${id}`);
@@ -256,56 +275,69 @@ export class N8NApiWrapper {
     });
   }
 
+  async retryExecution(id: number, instanceSlug?: string): Promise<N8NExecutionResponse> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Retrying failed execution with ID: ${id}`);
+        const response = await api.post(`/executions/${id}/retry`);
+        logger.log(`Retry initiated - New execution ID: ${response.data.id}`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError(`retrying execution with ID ${id}`, error);
+      }
+    });
+  }
+
   async executeWorkflow(id: string, runData?: Record<string, any>, instanceSlug?: string): Promise<N8NExecutionResponse> {
-    // Skip the callWithInstance wrapper to avoid unnecessary instance validation
-    // and provide direct helpful guidance about workflow execution limitations
-    
-    try {
-      logger.log(`Workflow execution request for ID: ${id}`);
-      
-      // Based on extensive analysis of successful executions, workflows with 
-      // Manual Trigger nodes are executed through the n8n web interface, not the REST API. 
-      // The REST API does not support direct workflow execution for security/design reasons.
-      
-      logger.log(`Workflow execution via REST API is not supported`);
-      logger.log(`Manual Trigger workflows must be executed through the n8n web interface`);
-      
-      // Return a helpful response indicating the limitation and providing guidance
-      return {
-        id: null,
-        finished: false,
-        mode: 'api_limitation',
-        message: 'Workflow execution via REST API is not supported for Manual Trigger workflows. This is a design limitation of n8n.',
-        workflowId: id,
-        explanation: 'Analysis of successful executions shows they occur through the n8n web interface, not REST API endpoints.',
-        recommendation: 'Use the "Execute Workflow" button in the n8n editor to run this workflow.',
-        alternativeMethods: [
-          'Execute manually via n8n web interface (recommended)',
-          'Convert Manual Trigger to Webhook Trigger for API execution',
-          'Use Schedule Trigger for automatic execution',
-          'Use other trigger types that support API activation'
-        ],
-        howToExecute: {
-          step1: 'Open the n8n web interface',
-          step2: 'Navigate to the workflow',
-          step3: 'Click the "Execute Workflow" button',
-          step4: 'Monitor execution in the executions panel'
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Workflow execution request for ID: ${id}`);
+
+        // First, verify the workflow exists to provide proper 404 errors
+        try {
+          await api.get(`/workflows/${id}`);
+        } catch (error) {
+          // If workflow doesn't exist, propagate the error
+          return this.handleApiError(`getting workflow ${id} for execution`, error);
         }
-      } as any;
-    } catch (error) {
-      // If we can't even provide guidance, still return helpful information
-      logger.log(`Error in execution guidance for workflow ${id}: ${error}`);
-      return {
-        id: null,
-        finished: false,
-        mode: 'api_limitation',
-        message: 'Workflow execution via REST API is not supported. This is a design limitation of n8n.',
-        workflowId: id,
-        error: error instanceof Error ? error.message : String(error),
-        recommendation: 'Use the n8n web interface to execute workflows manually.',
-        note: 'The REST API is primarily for workflow management, not execution.'
-      } as any;
-    }
+
+        // Based on extensive analysis of successful executions, workflows with
+        // Manual Trigger nodes are executed through the n8n web interface, not the REST API.
+        // The REST API does not support direct workflow execution for security/design reasons.
+
+        logger.log(`Workflow execution via REST API is not supported`);
+        logger.log(`Manual Trigger workflows must be executed through the n8n web interface`);
+
+        // Return a helpful response indicating the limitation and providing guidance
+        return {
+          id: null,
+          finished: false,
+          mode: 'api_limitation',
+          message: 'Workflow execution via REST API is not supported for Manual Trigger workflows. This is a design limitation of n8n.',
+          workflowId: id,
+          explanation: 'Analysis of successful executions shows they occur through the n8n web interface, not REST API endpoints.',
+          recommendation: 'Use the "Execute Workflow" button in the n8n editor to run this workflow.',
+          alternativeMethods: [
+            'Execute manually via n8n web interface (recommended)',
+            'Convert Manual Trigger to Webhook Trigger for API execution',
+            'Use Schedule Trigger for automatic execution',
+            'Use other trigger types that support API activation'
+          ],
+          howToExecute: {
+            step1: 'Open the n8n web interface',
+            step2: 'Navigate to the workflow',
+            step3: 'Click the "Execute Workflow" button',
+            step4: 'Monitor execution in the executions panel'
+          }
+        } as any;
+      } catch (error) {
+        return this.handleApiError(`executing workflow with ID ${id}`, error);
+      }
+    });
   }
 
   // Tag management methods
@@ -372,7 +404,7 @@ export class N8NApiWrapper {
   async deleteTag(id: string, instanceSlug?: string): Promise<N8NTagResponse> {
     return this.callWithInstance(instanceSlug, async () => {
       const api = this.envManager.getApiInstance(instanceSlug);
-      
+
       try {
         logger.log(`Deleting tag with ID: ${id}`);
         const response = await api.delete(`/tags/${id}`);
@@ -380,6 +412,67 @@ export class N8NApiWrapper {
         return response.data;
       } catch (error) {
         return this.handleApiError(`deleting tag with ID ${id}`, error);
+      }
+    });
+  }
+
+  // Credential management methods
+  async listCredentials(options: { limit?: number; cursor?: string } = {}, instanceSlug?: string): Promise<N8NCredentialListResponse> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log('Listing credentials (metadata only, no sensitive data)');
+        const response = await api.get('/credentials', { params: options });
+        logger.log(`Retrieved ${response.data.data.length} credentials`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError('listing credentials', error);
+      }
+    });
+  }
+
+  async createCredential(credential: { name: string; type: string; data: any }, instanceSlug?: string): Promise<any> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Creating credential: ${credential.name} (type: ${credential.type})`);
+        const response = await api.post('/credentials', credential);
+        logger.log(`Created credential with ID: ${response.data.id}`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError(`creating credential ${credential.name}`, error);
+      }
+    });
+  }
+
+  async getCredentialSchema(typeName: string, instanceSlug?: string): Promise<any> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Getting credential schema for type: ${typeName}`);
+        const response = await api.get(`/credentials/schema/${typeName}`);
+        logger.log(`Retrieved schema for credential type: ${typeName}`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError(`getting credential schema for type ${typeName}`, error);
+      }
+    });
+  }
+
+  async deleteCredential(id: string, instanceSlug?: string): Promise<any> {
+    return this.callWithInstance(instanceSlug, async () => {
+      const api = this.envManager.getApiInstance(instanceSlug);
+
+      try {
+        logger.log(`Deleting credential with ID: ${id}`);
+        const response = await api.delete(`/credentials/${id}`);
+        logger.log(`Deleted credential: ${id}`);
+        return response.data;
+      } catch (error) {
+        return this.handleApiError(`deleting credential with ID ${id}`, error);
       }
     });
   }

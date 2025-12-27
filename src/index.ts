@@ -259,10 +259,14 @@ class N8NWorkflowServer {
           {
             name: 'list_workflows',
             enabled: true,
-            description: 'List all workflows from n8n with essential metadata only (ID, name, status, dates, node count, tags). Optimized for performance to prevent large data transfers.',
-            inputSchema: { 
-              type: 'object', 
+            description: 'List all workflows from n8n with essential metadata only (ID, name, status, dates, node count, tags). Supports filtering by active status. Optimized for performance to prevent large data transfers.',
+            inputSchema: {
+              type: 'object',
               properties: {
+                active: {
+                  type: 'boolean',
+                  description: 'Filter by activation status. true = only active workflows, false = only inactive workflows, omit for all workflows'
+                },
                 random_string: {
                   type: 'string',
                   description: 'Dummy parameter for no-parameter tools'
@@ -413,7 +417,51 @@ class N8NWorkflowServer {
                   description: 'Optional instance name to override automatic instance selection'
                 }
               },
-              required: ['id', 'name', 'nodes']
+              required: ['id']
+            }
+          },
+          {
+            name: 'patch_workflow',
+            enabled: true,
+            description: 'Partially update workflow (returns guidance - PATCH not supported by n8n API). Use update_workflow for actual updates.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the workflow to partially update'
+                },
+                name: {
+                  type: 'string',
+                  description: 'New workflow name (optional)'
+                },
+                nodes: {
+                  type: 'array',
+                  description: 'New workflow nodes (optional)'
+                },
+                connections: {
+                  type: 'array',
+                  description: 'New workflow connections (optional)'
+                },
+                active: {
+                  type: 'boolean',
+                  description: 'New active status (optional)'
+                },
+                settings: {
+                  type: 'object',
+                  description: 'New settings object (optional)'
+                },
+                tags: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  description: 'New tags array (optional)'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['id']
             }
           },
           {
@@ -544,9 +592,28 @@ class N8NWorkflowServer {
             inputSchema: {
               type: 'object',
               properties: {
-                id: { 
+                id: {
                   type: 'number',
                   description: 'The ID of the execution to delete'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
+            name: 'retry_execution',
+            enabled: true,
+            description: 'Retry a failed workflow execution (creates new execution). Only works for executions with status "error".',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'number',
+                  description: 'The ID of the failed execution to retry'
                 },
                 instance: {
                   type: 'string',
@@ -658,6 +725,144 @@ class N8NWorkflowServer {
               },
               required: ['id']
             }
+          },
+          // Credential Tools
+          {
+            name: 'list_credentials',
+            enabled: true,
+            description: 'List all credentials (metadata only, sensitive data excluded for security). Returns credential ID, name, type, nodes access information, and timestamps. Actual credential data (passwords, tokens, keys) is never returned.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                limit: {
+                  type: 'number',
+                  description: 'Maximum number of credentials to return (default: 100)'
+                },
+                cursor: {
+                  type: 'string',
+                  description: 'Cursor for pagination'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              }
+            }
+          },
+          {
+            name: 'get_credential',
+            enabled: true,
+            description: 'Get credential by ID (returns guidance - GET not supported by n8n API for security). Credentials contain sensitive data and cannot be read through REST API.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the credential to retrieve'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
+            name: 'update_credential',
+            enabled: true,
+            description: 'Update credential (returns guidance - PUT not supported by n8n API for security). Use delete + create pattern instead.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the credential to update'
+                },
+                name: {
+                  type: 'string',
+                  description: 'New credential name'
+                },
+                type: {
+                  type: 'string',
+                  description: 'Credential type'
+                },
+                data: {
+                  type: 'object',
+                  description: 'Credential data (sensitive information)'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
+            name: 'create_credential',
+            enabled: true,
+            description: 'Create a new credential for external service authentication. Supports multiple credential types (httpBasicAuth, httpHeaderAuth, OAuth2, etc.). Use get_credential_schema to understand required fields for each type. Sensitive data is automatically encrypted by n8n.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: {
+                  type: 'string',
+                  description: 'User-defined name for the credential'
+                },
+                type: {
+                  type: 'string',
+                  description: 'Credential type (e.g., "httpBasicAuth", "httpHeaderAuth", "oAuth2Api", "googleDriveOAuth2Api"). Use get_credential_schema to see available types and their required fields.'
+                },
+                data: {
+                  type: 'object',
+                  description: 'Type-specific credential data. Structure varies by credential type. For httpBasicAuth: {user, password}. For httpHeaderAuth: {name, value}. Use get_credential_schema for exact requirements.'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['name', 'type', 'data']
+            }
+          },
+          {
+            name: 'delete_credential',
+            enabled: true,
+            description: 'Delete a credential by ID. Removes the credential from n8n permanently. Workflows using this credential will need to be updated.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The ID of the credential to delete'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['id']
+            }
+          },
+          {
+            name: 'get_credential_schema',
+            enabled: true,
+            description: 'Get JSON schema for a specific credential type (e.g., httpBasicAuth, googleDriveOAuth2Api). Returns field definitions, types, required fields, and validation rules to help create credentials programmatically.',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                typeName: {
+                  type: 'string',
+                  description: 'The credential type name (e.g., "httpBasicAuth", "httpHeaderAuth", "googleDriveOAuth2Api", "slackApi")'
+                },
+                instance: {
+                  type: 'string',
+                  description: 'Optional instance name to override automatic instance selection'
+                }
+              },
+              required: ['typeName']
+            }
           }
         ]
       };
@@ -675,11 +880,11 @@ class N8NWorkflowServer {
           switch (toolName) {
             case 'list_workflows':
               try {
-                const workflows = await this.n8nWrapper.listWorkflows(args.instance);
+                const workflows = await this.n8nWrapper.listWorkflows(args.instance, args.active);
                 return {
-                  content: [{ 
-                    type: 'text', 
-                    text: JSON.stringify(workflows, null, 2) 
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(workflows, null, 2)
                   }]
                 };
               } catch (error: any) {
@@ -707,19 +912,28 @@ class N8NWorkflowServer {
                 
                 this.log('info', 'Create workflow parameters:', JSON.stringify(parameters, null, 2));
                 
-                if (!parameters.name || !parameters.nodes) {
-                  throw new McpError(ErrorCode.InvalidParams, 'Workflow name and nodes are required');
+                if (!parameters.name) {
+                  throw new McpError(ErrorCode.InvalidParams, 'Workflow name is required');
                 }
-                
-                if (!parameters.connections || !Array.isArray(parameters.connections) || parameters.connections.length === 0) {
-                  this.log('info', 'No connections provided. Workflow nodes will not be connected.');
-                  throw new McpError(ErrorCode.InvalidParams, 'Connections array is required and must not be empty. Each workflow node should be properly connected.');
+
+                // Nodes is optional - can create minimal workflow with just name
+                const nodes = parameters.nodes || [];
+
+                // Connections is optional - workflows can exist without connections
+                const connections = parameters.connections || [];
+
+                if (!Array.isArray(nodes)) {
+                  throw new McpError(ErrorCode.InvalidParams, 'Nodes must be an array');
                 }
-                
+
+                if (!Array.isArray(connections)) {
+                  throw new McpError(ErrorCode.InvalidParams, 'Connections must be an array');
+                }
+
                 // Create input data in the required format
                 const workflowInput: WorkflowInput = {
                   name: parameters.name,
-                  nodes: parameters.nodes as any[],
+                  nodes: nodes as any[],
                   connections: []
                 };
                 
@@ -796,23 +1010,23 @@ class N8NWorkflowServer {
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
-              
-              if (!args.nodes) {
-                throw new McpError(ErrorCode.InvalidParams, 'Workflow nodes are required');
-              }
-              
+
+              // Nodes and connections are optional for updates (same as create_workflow)
+              const updateNodes = args.nodes || [];
+              const updateConnections = args.connections || [];
+
               // Create input data for updating in the required format
               const updateInput: WorkflowInput = {
                 name: args.name,
-                nodes: args.nodes as any[],
+                nodes: updateNodes as any[],
                 connections: []
               };
               
               // Transform connections to LegacyWorkflowConnection[] format
-              if (args.connections) {
+              if (updateConnections.length > 0) {
                 // Проверяем, имеет ли объект connections структуру объекта или массива
-                if (Array.isArray(args.connections)) {
-                  updateInput.connections = args.connections.map((conn: any) => ({
+                if (Array.isArray(updateConnections)) {
+                  updateInput.connections = updateConnections.map((conn: any) => ({
                     source: conn.source,
                     target: conn.target,
                     sourceOutput: conn.sourceOutput,
@@ -859,7 +1073,66 @@ class N8NWorkflowServer {
                 this.log('error', `Failed to update workflow: ${error.message}`, error);
                 throw new McpError(ErrorCode.InternalError, `Failed to update workflow: ${error.message}`);
               }
-            
+
+            case 'patch_workflow':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
+              }
+
+              // PATCH method is not supported by n8n REST API (tested on v1.82.3 and v2.1.4)
+              // Returns 405 Method Not Allowed
+              this.log('info', `PATCH workflow request for ID: ${args.id} - returning API limitation message`);
+
+              const requestedFields = [];
+              if (args.name !== undefined) requestedFields.push('name');
+              if (args.active !== undefined) requestedFields.push('active');
+              if (args.settings !== undefined) requestedFields.push('settings');
+              if (args.tags !== undefined) requestedFields.push('tags');
+              if (args.nodes !== undefined) requestedFields.push('nodes');
+              if (args.connections !== undefined) requestedFields.push('connections');
+
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: false,
+                    method: 'PATCH',
+                    workflowId: args.id,
+                    requestedFields: requestedFields,
+                    message: 'PATCH method is not supported by n8n REST API',
+                    apiLimitation: 'n8n API does not support PATCH /workflows/{id} (returns 405 Method Not Allowed)',
+                    testedVersions: ['v1.82.3', 'v2.1.4'],
+                    recommendation: 'Use update_workflow (PUT method) instead for updating workflows',
+                    workaround: {
+                      description: 'To update only specific fields, use the update_workflow tool with complete workflow structure',
+                      steps: [
+                        '1. Retrieve current workflow using get_workflow',
+                        '2. Modify only the desired fields',
+                        '3. Send complete updated workflow via update_workflow',
+                      ],
+                      example: {
+                        step1: 'const workflow = await get_workflow({ id: "' + args.id + '" })',
+                        step2: 'workflow.name = "New Name"  // or modify other fields',
+                        step3: 'const updated = await update_workflow({ id: workflow.id, ...workflow })'
+                      }
+                    },
+                    alternativeTools: {
+                      update_workflow: 'Full workflow update (PUT) - requires complete workflow structure',
+                      activate_workflow: 'Change active status to true',
+                      deactivate_workflow: 'Change active status to false'
+                    },
+                    technicalDetails: {
+                      httpMethod: 'PATCH',
+                      endpoint: '/api/v1/workflows/{id}',
+                      expectedBehavior: 'Partial update of workflow fields',
+                      actualBehavior: '405 Method Not Allowed',
+                      documentation: 'PATCH is documented in API docs but not implemented in n8n',
+                      implementationStatus: 'Code ready, waiting for n8n API support'
+                    }
+                  }, null, 2)
+                }]
+              };
+
             case 'delete_workflow':
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
@@ -877,28 +1150,38 @@ class N8NWorkflowServer {
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
-              
-              const activatedWorkflow = await this.n8nWrapper.activateWorkflow(args.id, args.instance);
-              return {
-                content: [{ 
-                  type: 'text', 
-                  text: JSON.stringify(activatedWorkflow, null, 2) 
-                }]
-              };
-            
+
+              try {
+                const activatedWorkflow = await this.n8nWrapper.activateWorkflow(args.id, args.instance);
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(activatedWorkflow, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to activate workflow: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to activate workflow: ${error.message}`);
+              }
+
             case 'deactivate_workflow':
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Workflow ID is required');
               }
-              
-              const deactivatedWorkflow = await this.n8nWrapper.deactivateWorkflow(args.id, args.instance);
-              return {
-                content: [{ 
-                  type: 'text', 
-                  text: JSON.stringify(deactivatedWorkflow, null, 2) 
-                }]
-              };
-            
+
+              try {
+                const deactivatedWorkflow = await this.n8nWrapper.deactivateWorkflow(args.id, args.instance);
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(deactivatedWorkflow, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to deactivate workflow: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to deactivate workflow: ${error.message}`);
+              }
+
             // Execution Tools
             case 'list_executions':
               const executions = await this.n8nWrapper.listExecutions({
@@ -933,15 +1216,33 @@ class N8NWorkflowServer {
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Execution ID is required');
               }
-              
+
               const deletedExecution = await this.n8nWrapper.deleteExecution(args.id, args.instance);
               return {
-                content: [{ 
-                  type: 'text', 
-                  text: JSON.stringify(deletedExecution, null, 2) 
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify(deletedExecution, null, 2)
                 }]
               };
-            
+
+            case 'retry_execution':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Execution ID is required');
+              }
+
+              try {
+                const retriedExecution = await this.n8nWrapper.retryExecution(args.id, args.instance);
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(retriedExecution, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to retry execution: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to retry execution: ${error.message}`);
+              }
+
             // Tag Tools
             case 'create_tag':
               if (!args.name) {
@@ -1005,15 +1306,272 @@ class N8NWorkflowServer {
               if (!args.id) {
                 throw new McpError(ErrorCode.InvalidParams, 'Tag ID is required');
               }
-              
+
               const deletedTag = await this.n8nWrapper.deleteTag(args.id, args.instance);
               return {
-                content: [{ 
-                  type: 'text', 
-                  text: JSON.stringify(deletedTag, null, 2) 
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify(deletedTag, null, 2)
                 }]
               };
-            
+
+            // Credential Tools
+            case 'list_credentials':
+              // Credentials API is not supported by n8n REST API
+              this.log('info', `Credentials API request - returning API limitation message`);
+
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: false,
+                    method: 'GET',
+                    endpoint: '/credentials',
+                    message: 'Credentials API is not supported by n8n REST API',
+                    apiLimitation: 'n8n API does not support GET /credentials endpoint (returns 405 Method Not Allowed)',
+                    testedVersions: ['v1.82.3', 'v2.1.4'],
+                    recommendation: 'Use the n8n web interface to view and manage credentials',
+                    securityNote: 'Credentials contain sensitive data (API keys, passwords, tokens) and are intentionally restricted from REST API access for security reasons',
+                    alternativeAccess: {
+                      webInterface: {
+                        description: 'Access credentials through n8n UI',
+                        steps: [
+                          '1. Open your n8n web interface',
+                          '2. Navigate to Credentials menu',
+                          '3. View and manage all credentials',
+                          '4. Create, edit, or delete credentials as needed'
+                        ],
+                        url: 'Navigate to: Settings → Credentials'
+                      },
+                      workflowContext: {
+                        description: 'Credentials are accessible within workflow nodes',
+                        usage: 'When configuring nodes in workflows, credentials can be selected from a dropdown list',
+                        note: 'Credential data is automatically injected into nodes during execution'
+                      }
+                    },
+                    understandingCredentials: {
+                      purpose: 'Credentials store authentication information for external services',
+                      types: [
+                        'OAuth2 (Google, GitHub, etc.)',
+                        'API Keys',
+                        'HTTP Basic Auth',
+                        'HTTP Header Auth',
+                        'Database connections',
+                        'Custom credentials'
+                      ],
+                      security: 'All credential data is encrypted at rest and never exposed through REST API'
+                    },
+                    technicalDetails: {
+                      httpMethod: 'GET',
+                      endpoint: '/api/v1/credentials',
+                      responseCode: 405,
+                      errorMessage: 'GET method not allowed',
+                      apiVersion: 'v1',
+                      restriction: 'By design - credentials API intentionally not exposed for security'
+                    }
+                  }, null, 2)
+                }]
+              };
+
+            case 'get_credential':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Credential ID is required');
+              }
+
+              // GET /credentials/{id} is not supported by n8n REST API
+              this.log('info', `GET credential by ID request for ${args.id} - returning API limitation message`);
+
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: false,
+                    method: 'GET',
+                    endpoint: `/credentials/${args.id}`,
+                    credentialId: args.id,
+                    message: 'Reading individual credentials is not supported by n8n REST API',
+                    apiLimitation: 'n8n API does not support GET /credentials/{id} endpoint (returns 405 Method Not Allowed)',
+                    testedVersions: ['v1.82.3', 'v2.1.4'],
+                    securityReason: 'Prevents exposure of sensitive credential data through API. This is an intentional security restriction.',
+                    recommendation: 'Credentials are designed for use within workflows, not for reading through API',
+                    alternativeApproaches: {
+                      viewInUI: {
+                        description: 'View credential details in n8n web interface',
+                        steps: [
+                          '1. Open n8n web interface',
+                          '2. Navigate to Settings → Credentials',
+                          '3. Find and open the specific credential',
+                          '4. View configuration (sensitive data remains masked)'
+                        ]
+                      },
+                      useInWorkflow: {
+                        description: 'Credentials are automatically available in workflow nodes',
+                        usage: 'When configuring a node, select the credential from the dropdown. Credential data is automatically injected during execution.',
+                        note: 'This is the intended use case - credentials work transparently without manual data handling'
+                      },
+                      recreateIfNeeded: {
+                        description: 'If you need to update a credential, delete and recreate it',
+                        steps: [
+                          '1. Note the credential name and type',
+                          '2. Use delete_credential to remove it',
+                          '3. Use create_credential to recreate with new data'
+                        ],
+                        tools: ['delete_credential', 'create_credential']
+                      }
+                    },
+                    availableOperations: {
+                      create: 'Use create_credential to create new credentials',
+                      delete: 'Use delete_credential to remove credentials',
+                      schema: 'Use get_credential_schema to get credential type schema',
+                      list: 'list_credentials also unavailable (405) - view in UI instead'
+                    },
+                    technicalDetails: {
+                      httpMethod: 'GET',
+                      endpoint: `/api/v1/credentials/${args.id}`,
+                      responseCode: 405,
+                      errorMessage: 'GET method not allowed',
+                      apiVersion: 'v1',
+                      restriction: 'By design - reading credentials intentionally blocked for security',
+                      partialAPISupport: 'Only CREATE, DELETE, and SCHEMA operations are supported via REST API'
+                    }
+                  }, null, 2)
+                }]
+              };
+
+            case 'update_credential':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Credential ID is required');
+              }
+
+              // PUT /credentials/{id} is not supported by n8n REST API
+              this.log('info', `UPDATE credential request for ${args.id} - returning API limitation message`);
+
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: false,
+                    method: 'PUT',
+                    endpoint: `/credentials/${args.id}`,
+                    credentialId: args.id,
+                    message: 'Updating credentials is not supported by n8n REST API',
+                    apiLimitation: 'n8n API does not support PUT /credentials/{id} endpoint (returns 405 Method Not Allowed)',
+                    testedVersions: ['v1.82.3', 'v2.1.4'],
+                    securityReason: 'Prevents modification of existing credentials through API. This is an intentional security restriction.',
+                    recommendation: 'Use the DELETE + CREATE pattern to "update" a credential',
+                    workaround: {
+                      description: 'To update a credential, delete the old one and create a new one with updated data',
+                      steps: [
+                        '1. Note the credential details (name, type) from n8n UI',
+                        '2. Use delete_credential tool to remove the old credential',
+                        '3. Use create_credential tool to create new credential with updated data',
+                        '4. Update any workflows that referenced the old credential (if ID changes)'
+                      ],
+                      example: {
+                        step1: 'View credential in n8n UI to note: name="My API Key", type="httpHeaderAuth"',
+                        step2: 'await delete_credential({ id: "old-credential-id" })',
+                        step3: 'const newCred = await create_credential({ name: "My API Key", type: "httpHeaderAuth", data: { name: "Authorization", value: "Bearer new-token" } })',
+                        step4: 'Workflows automatically use credentials by name, or update node configuration if needed'
+                      },
+                      note: 'This is the intended pattern - credentials are immutable once created for security'
+                    },
+                    alternativeApproaches: {
+                      uiUpdate: {
+                        description: 'Update credential directly in n8n web interface',
+                        steps: [
+                          '1. Open n8n web interface',
+                          '2. Navigate to Settings → Credentials',
+                          '3. Find and open the credential',
+                          '4. Click Edit and update the fields',
+                          '5. Save changes'
+                        ],
+                        note: 'This is the recommended approach for most users'
+                      },
+                      deleteAndRecreate: {
+                        description: 'Programmatic update via delete + create',
+                        tools: ['delete_credential', 'create_credential'],
+                        usageNote: 'Useful for automation scripts and bulk updates'
+                      }
+                    },
+                    availableOperations: {
+                      create: 'Use create_credential to create new credentials',
+                      delete: 'Use delete_credential to remove credentials',
+                      schema: 'Use get_credential_schema to get credential type schema for validation',
+                      read: 'Reading credentials (GET) also unavailable (405) - view in UI instead'
+                    },
+                    technicalDetails: {
+                      httpMethod: 'PUT',
+                      endpoint: `/api/v1/credentials/${args.id}`,
+                      responseCode: 405,
+                      errorMessage: 'GET method not allowed',
+                      apiVersion: 'v1',
+                      restriction: 'By design - updating credentials intentionally blocked for security',
+                      partialAPISupport: 'Only CREATE, DELETE, and SCHEMA operations are supported via REST API',
+                      immutabilityReason: 'Credentials are designed to be immutable for audit trail and security'
+                    }
+                  }, null, 2)
+                }]
+              };
+
+            case 'delete_credential':
+              if (!args.id) {
+                throw new McpError(ErrorCode.InvalidParams, 'Credential ID is required');
+              }
+
+              try {
+                const deletedCredential = await this.n8nWrapper.deleteCredential(args.id, args.instance);
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(deletedCredential, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to delete credential: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to delete credential: ${error.message}`);
+              }
+
+            case 'get_credential_schema':
+              if (!args.typeName) {
+                throw new McpError(ErrorCode.InvalidParams, 'Credential type name is required');
+              }
+
+              try {
+                const schema = await this.n8nWrapper.getCredentialSchema(args.typeName, args.instance);
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(schema, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to get credential schema: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to get credential schema: ${error.message}`);
+              }
+
+            case 'create_credential':
+              if (!args.name || !args.type || !args.data) {
+                throw new McpError(ErrorCode.InvalidParams, 'Credential name, type, and data are required');
+              }
+
+              try {
+                const credential = await this.n8nWrapper.createCredential({
+                  name: args.name,
+                  type: args.type,
+                  data: args.data
+                }, args.instance);
+
+                return {
+                  content: [{
+                    type: 'text',
+                    text: JSON.stringify(credential, null, 2)
+                  }]
+                };
+              } catch (error: any) {
+                this.log('error', `Failed to create credential: ${error.message}`, error);
+                throw new McpError(ErrorCode.InternalError, `Failed to create credential: ${error.message}`);
+              }
+
             default:
               throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
           }

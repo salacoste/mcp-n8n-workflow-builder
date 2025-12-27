@@ -40,7 +40,7 @@ The n8n MCP Workflow Builder is a powerful MCP (Model Context Protocol) server t
 
     Explore workflow patterns, integrations, and troubleshooting guides
 
-    [:octicons-arrow-right-24: View Examples](examples/workflows/basic-patterns.md)
+    [:octicons-arrow-right-24: View Examples](examples/basic/webhook-workflow.md)
 
 </div>
 

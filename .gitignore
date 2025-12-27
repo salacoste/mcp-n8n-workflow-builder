@@ -49,3 +49,7 @@ Thumbs.db
 # BMAD (local only)
 .bmad-core/
 .bmad-*/
+
+# Documentation (MkDocs)
+site/
+.cache/

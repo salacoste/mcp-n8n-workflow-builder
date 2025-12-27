@@ -654,15 +654,6 @@ Claude: I'll create a monitoring workflow that checks execution status.
 
 ---
 
-## Related Examples
-
-- [Email Integration Tutorial](../../tutorials/integrations/email-integration.md)
-- [Slack Notifications](../integrations/slack-notifications.md)
-- [Data Transformation](./data-transformation.md)
-- [Error Handling Patterns](../advanced/error-handling.md)
-
----
-
 ## Key Takeaways
 
 ✅ **Learned:**

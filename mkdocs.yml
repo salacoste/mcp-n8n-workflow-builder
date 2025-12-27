@@ -174,11 +174,6 @@ nav:
     - Basic Examples:
       - HTTP Webhook Workflow: examples/basic/webhook-workflow.md
       - Scheduled Daily Report: examples/basic/scheduled-report.md
-    - Integration Examples:
-      - Slack Integration Tutorial: tutorials/integrations/slack-integration.md
-      - Email Integration Tutorial: tutorials/integrations/email-integration.md
-      - Google Sheets Tutorial: tutorials/integrations/google-sheets-integration.md
-      - PostgreSQL Tutorial: tutorials/integrations/postgresql-integration.md
 
   - Usage Guides:
     - Claude Desktop Patterns: guides/claude-desktop-patterns.md

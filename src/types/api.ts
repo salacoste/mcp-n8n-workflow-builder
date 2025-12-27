@@ -80,3 +80,31 @@ export interface N8NTagListResponse {
   data: N8NTagResponse[];
   nextCursor?: string;
 }
+
+/**
+ * Represents a node access entry for a credential
+ */
+export interface N8NCredentialNodeAccess {
+  nodeType: string;
+  date: string;
+}
+
+/**
+ * Response structure for a single credential (metadata only, no sensitive data)
+ */
+export interface N8NCredentialResponse {
+  id: string;
+  name: string;
+  type: string;
+  nodesAccess: N8NCredentialNodeAccess[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Response structure when listing credentials
+ */
+export interface N8NCredentialListResponse {
+  data: N8NCredentialResponse[];
+  nextCursor?: string | null;
+}

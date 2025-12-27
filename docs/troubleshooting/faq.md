@@ -531,8 +531,6 @@ Invite your bot to the channel:
 Alternatively, add chat:write.public scope to post to public channels without invitation.
 ```
 
-See: [Slack Integration Tutorial](../tutorials/integrations/slack-integration.md)
-
 ---
 
 ### Q: How do I connect to my database?
@@ -577,8 +575,6 @@ Workflow includes:
 - Redis
 - Microsoft SQL Server
 - SQLite
-
-See: [Database Integration Tutorial](../tutorials/integrations/postgresql-integration.md)
 
 ---
 
@@ -901,7 +897,6 @@ Include:
 - **[Error Reference](./error-reference.md)** - Complete error message guide
 - **[Claude Desktop Patterns](../guides/claude-desktop-patterns.md)** - Effective usage patterns
 - **[Multi-Instance Setup](../multi-instance/configuration.md)** - Multi-environment configuration
-- **[Integration Tutorials](../tutorials/integrations/)** - Service integration guides
 - **[Examples](../examples/)** - Workflow examples and patterns
 
 ---

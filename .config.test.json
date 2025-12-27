@@ -1,0 +1,33 @@
+{
+  "environments": {
+    "test-with-api-v1-slash": {
+      "n8n_host": "https://n8n.example.com/api/v1/",
+      "n8n_api_key": "test_key_with_api_v1_slash"
+    },
+    "test-with-api-v1": {
+      "n8n_host": "https://n8n.example.com/api/v1",
+      "n8n_api_key": "test_key_with_api_v1"
+    },
+    "test-without-api-v1": {
+      "n8n_host": "https://n8n.example.com",
+      "n8n_api_key": "test_key_without_api_v1"
+    },
+    "test-with-trailing-slash": {
+      "n8n_host": "https://n8n.example.com/",
+      "n8n_api_key": "test_key_with_trailing_slash"
+    },
+    "test-with-double-slash": {
+      "n8n_host": "https://n8n.example.com//",
+      "n8n_api_key": "test_key_double_slash"
+    },
+    "test-localhost": {
+      "n8n_host": "http://localhost:5678",
+      "n8n_api_key": "test_key_localhost"
+    },
+    "test-localhost-api-v1": {
+      "n8n_host": "http://localhost:5678/api/v1",
+      "n8n_api_key": "test_key_localhost_api_v1"
+    }
+  },
+  "defaultEnv": "test-without-api-v1"
+}

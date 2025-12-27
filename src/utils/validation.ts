@@ -9,20 +9,22 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
     throw new McpError(ErrorCode.InvalidParams, 'Workflow spec must be an object');
   }
   
-  if (!Array.isArray(input.nodes)) {
+  // Nodes is optional - defaults to empty array
+  const nodes = input.nodes || [];
+  if (!Array.isArray(nodes)) {
     throw new McpError(ErrorCode.InvalidParams, 'Workflow nodes must be an array');
   }
-  
-  if (!Array.isArray(input.connections)) {
+
+  // Connections is optional - defaults to empty array
+  const connections = input.connections || [];
+  if (!Array.isArray(connections)) {
     throw new McpError(ErrorCode.InvalidParams, 'Workflow connections must be an array');
   }
-  
-  if (input.connections.length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, 'Workflow connections array cannot be empty. Nodes must be connected.');
-  }
-  
+
+  // Empty connections array is allowed - workflows can exist without connections
+
   // Check and transform nodes
-  const formattedNodes = (input.nodes || []).map((node, index) => {
+  const formattedNodes = nodes.map((node, index) => {
     if (typeof node !== 'object' || typeof node.type !== 'string' || typeof node.name !== 'string') {
       throw new McpError(ErrorCode.InvalidParams, 'Each node must have a type and name');
     }
@@ -91,10 +93,10 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
   });
   
   // Transform connections to n8n format
-  let connections: ConnectionMap = {};
-  
-  if (input.connections && Array.isArray(input.connections)) {
-    input.connections.forEach((conn: LegacyWorkflowConnection) => {
+  let connectionsMap: ConnectionMap = {};
+
+  if (connections.length > 0) {
+    connections.forEach((conn: LegacyWorkflowConnection) => {
       // Find nodes by name if source and target are node names
       const sourceNode = findNodeByNameOrId(formattedNodes, conn.source);
       const targetNode = findNodeByNameOrId(formattedNodes, conn.target);
@@ -108,35 +110,33 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
       }
       
       // Используем имя узла в качестве ключа для соединений
-      if (!connections[sourceNode.name]) {
-        connections[sourceNode.name] = { main: [] };
+      if (!connectionsMap[sourceNode.name]) {
+        connectionsMap[sourceNode.name] = { main: [] };
       }
-      
+
       // Make sure the array for sourceOutput exists
       const sourceOutput = conn.sourceOutput || 0;
-      while (connections[sourceNode.name].main.length <= sourceOutput) {
-        connections[sourceNode.name].main.push([]);
+      while (connectionsMap[sourceNode.name].main.length <= sourceOutput) {
+        connectionsMap[sourceNode.name].main.push([]);
       }
-      
+
       // Используем имя целевого узла для target
-      connections[sourceNode.name].main[sourceOutput].push({
+      connectionsMap[sourceNode.name].main[sourceOutput].push({
         node: targetNode.name,
         type: 'main',
         index: conn.targetInput || 0
       });
     });
-  } else {
-    throw new McpError(ErrorCode.InvalidParams, 'Workflow connections are missing or invalid. Please provide a valid connections array.');
   }
-  
+
   // Проверка на некорректные ключи соединений
-  Object.keys(connections).forEach(nodeKey => {
+  Object.keys(connectionsMap).forEach(nodeKey => {
     const matchingNode = formattedNodes.find(node => node.name === nodeKey);
     if (!matchingNode) {
       if (process.env.DEBUG === 'true') {
         console.error(`Warning: Found connection with invalid node name "${nodeKey}". Removing this connection.`);
       }
-      delete connections[nodeKey];
+      delete connectionsMap[nodeKey];
     }
   });
   
@@ -150,7 +150,7 @@ export function validateWorkflowSpec(input: WorkflowInput): WorkflowSpec {
   return {
     name: input.name || 'New Workflow',
     nodes: formattedNodes,
-    connections: connections,
+    connections: connectionsMap,
     settings: mergedSettings
   };
 }
