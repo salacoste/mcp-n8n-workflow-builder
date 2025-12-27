@@ -172,6 +172,7 @@ Leverage Claude AI to intelligently generate workflow logic based on your busine
 - ✅ Package size optimization (1.3MB → 278KB)
 - ✅ Multi-instance architecture with intelligent routing
 - ✅ Enhanced credential management with schema validation
+- ✅ Comprehensive documentation site with 38+ pages
 
 [:octicons-arrow-right-24: View Full Changelog](about/changelog.md)
 
