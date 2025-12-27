@@ -13,7 +13,7 @@ Build, manage, and monitor n8n workflows using **Claude AI** and **Cursor IDE** 
 
 [Features](#-key-features) • [Quick Start](#-quick-start) • [Documentation](https://salacoste.github.io/mcp-n8n-workflow-builder/) • [Examples](#-examples) • [API Reference](https://salacoste.github.io/mcp-n8n-workflow-builder/api/overview/)
 
-![n8n MCP Server Hero](https://github.com/user-attachments/assets/6849a1de-6048-474d-8477-5f3fdb854196)
+![AI-Powered Workflow Builder - Build n8n workflows with natural language](./docs/assets/images/readme_01.jpg)
 
 </div>
 
@@ -22,6 +22,14 @@ Build, manage, and monitor n8n workflows using **Claude AI** and **Cursor IDE** 
 ## 🎯 What is This?
 
 **n8n Workflow Builder MCP Server** transforms workflow automation by enabling you to create and manage n8n workflows through **conversational AI**. No more manual JSON editing or complex UI navigation—just describe what you need in natural language, and let AI build it for you.
+
+<div align="center">
+
+![AI Robot Building Workflows](./docs/assets/images/readme_01.jpg)
+
+*AI-powered workflow automation: Just describe what you need, and watch AI build it*
+
+</div>
 
 ### The Problem It Solves
 
