@@ -5,7 +5,25 @@ All notable changes to the n8n Workflow Builder MCP Server will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.2] - 2025-12-27
+## [0.9.3] - 2025-12-27
+
+### Security Fix 🔒
+**CRITICAL: Removed sensitive log files from npm package**
+
+### Fixed
+- **SECURITY**: Prevented `server.log` and other log files from being published to npm
+- **SECURITY**: Added `*.log` to `.npmignore` to block all log files
+- **SECURITY**: Unpublished versions 0.9.1 and 0.9.2 that contained sensitive data
+
+### Changed
+- **Package size reduced** - 653.2 KB (down from 699 KB) by excluding log files
+- **File count reduced** - 200 files (down from 201)
+
+⚠️ **IMPORTANT**: If you downloaded version 0.9.1 or 0.9.2, please rotate your n8n API key immediately as it may have been exposed.
+
+## [0.9.2] - 2025-12-27 [YANKED]
+
+**⚠️ This version was unpublished due to security issue (exposed API key in server.log)**
 
 ### Documentation & Discoverability
 **Enhanced npm package metadata and documentation integration**

@@ -1,6 +1,6 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "AI-powered n8n workflow management via Model Context Protocol (MCP). Create, manage, and monitor workflows through natural language with Claude AI. Multi-instance support with comprehensive documentation.",
   "scripts": {
     "clean": "rm -rf build",
