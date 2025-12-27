@@ -1,0 +1,14 @@
+# MkDocs page ordering configuration
+# This file helps organize the navigation structure
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation:
+      - npm-installation.md
+      - manual-installation.md
+      - configuration.md
+    - Quick Start:
+      - claude-desktop.md
+      - first-workflow.md
+      - verification.md

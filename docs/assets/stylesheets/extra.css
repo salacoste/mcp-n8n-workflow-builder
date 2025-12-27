@@ -1,0 +1,166 @@
+/* Custom Styles for n8n MCP Workflow Builder Documentation */
+
+:root {
+  /* Primary Color Override */
+  --md-primary-fg-color: #4F46E5;
+  --md-primary-fg-color--light: #6366F1;
+  --md-primary-fg-color--dark: #4338CA;
+
+  /* Accent Color Override */
+  --md-accent-fg-color: #4F46E5;
+
+  /* Code Block Customization */
+  --md-code-bg-color: #F3F4F6;
+  --md-code-fg-color: #1F2937;
+}
+
+/* Dark Mode Overrides */
+[data-md-color-scheme="slate"] {
+  --md-code-bg-color: #1E293B;
+  --md-code-fg-color: #E2E8F0;
+}
+
+/* Grid Cards Layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.grid.cards > * {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.grid.cards > *:hover {
+  border-color: var(--md-accent-fg-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Feature Icons */
+.grid.cards svg.lg {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+  color: var(--md-accent-fg-color);
+}
+
+/* Custom Admonitions */
+.admonition.tip {
+  border-left-color: #10B981;
+}
+
+.admonition.warning {
+  border-left-color: #F59E0B;
+}
+
+.admonition.question {
+  border-left-color: #3B82F6;
+}
+
+/* Code Block Enhancements */
+.highlight pre {
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Copy Code Button */
+.md-clipboard {
+  color: var(--md-accent-fg-color);
+}
+
+/* Table Styling */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+table thead {
+  background-color: var(--md-code-bg-color);
+}
+
+table th,
+table td {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+/* Navigation Enhancements */
+.md-nav__link--active {
+  font-weight: 600;
+  color: var(--md-accent-fg-color);
+}
+
+/* Button Styling */
+.md-button {
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.md-button--primary {
+  background-color: var(--md-primary-fg-color);
+}
+
+.md-button--primary:hover {
+  background-color: var(--md-primary-fg-color--dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 76.1875em) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Code Annotations */
+.md-annotation {
+  background-color: var(--md-accent-fg-color);
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+/* Tabbed Content */
+.tabbed-set {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+/* Search Highlighting */
+.md-search-result__article--document {
+  border-left: 3px solid var(--md-accent-fg-color);
+}
+
+/* Footer Customization */
+.md-footer {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Homepage Hero Section */
+.md-typeset h1:first-child {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+/* Feature List Icons */
+h3[id^="fontawesome"] {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+h3[id^="fontawesome"]::before {
+  color: var(--md-accent-fg-color);
+}

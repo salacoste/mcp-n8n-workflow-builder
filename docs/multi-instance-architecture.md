@@ -25,11 +25,11 @@ The ConfigLoader handles loading configuration from multiple sources:
 {
   "environments": {
     "production": {
-      "n8n_host": "https://n8n.example.com/api/v1/",
+      "n8n_host": "https://n8n.example.com",
       "n8n_api_key": "prod_api_key"
     },
     "staging": {
-      "n8n_host": "https://staging.example.com/api/v1/",
+      "n8n_host": "https://staging.example.com",
       "n8n_api_key": "staging_api_key"
     }
   },
@@ -76,15 +76,15 @@ await wrapper.createWorkflow(data, "staging"); // Creates in staging
 {
   "environments": {
     "production": {
-      "n8n_host": "https://n8n.company.com/api/v1/",
+      "n8n_host": "https://n8n.company.com",
       "n8n_api_key": "n8n_prod_api_key_here"
     },
     "staging": {
-      "n8n_host": "https://staging-n8n.company.com/api/v1/",
+      "n8n_host": "https://staging-n8n.company.com",
       "n8n_api_key": "n8n_staging_api_key_here"
     },
     "development": {
-      "n8n_host": "http://localhost:5678/api/v1/",
+      "n8n_host": "http://localhost:5678",
       "n8n_api_key": "n8n_dev_api_key_here"
     }
   },
@@ -95,7 +95,7 @@ await wrapper.createWorkflow(data, "staging"); // Creates in staging
 ### Single-Instance Configuration (.env)
 
 ```env
-N8N_HOST=https://your-n8n-instance.com/api/v1/
+N8N_HOST=https://your-n8n-instance.com
 N8N_API_KEY=your_api_key_here
 ```
 
@@ -104,7 +104,7 @@ This automatically converts to:
 {
   "environments": {
     "default": {
-      "n8n_host": "https://your-n8n-instance.com/api/v1/",
+      "n8n_host": "https://your-n8n-instance.com",
       "n8n_api_key": "your_api_key_here"
     }
   },

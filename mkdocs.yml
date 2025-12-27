@@ -1,0 +1,204 @@
+# Site Information
+site_name: n8n MCP Workflow Builder
+site_url: https://salacoste.github.io/mcp-n8n-workflow-builder
+site_description: AI-powered n8n workflow management via Model Context Protocol
+site_author: IMD
+
+# Repository
+repo_name: salacoste/mcp-n8n-workflow-builder
+repo_url: https://github.com/salacoste/mcp-n8n-workflow-builder
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 IMD
+
+# Theme Configuration
+theme:
+  name: material
+  language: en
+
+  # Color Scheme
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  # Features
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+
+  # Icons
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+  # Logo and Favicon (to be added later)
+  # logo: assets/images/logo.png
+  # favicon: assets/images/favicon.png
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+      separator: '[\s\-\.]+'
+
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+
+  - minify:
+      minify_html: true
+      minify_js: true
+      minify_css: true
+
+# Markdown Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra CSS/JS
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra_javascript:
+  - assets/javascripts/extra.js
+
+# Social Links
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/salacoste/mcp-n8n-workflow-builder
+    - icon: fontawesome/brands/npm
+      link: https://www.npmjs.com/package/@kernel.salacoste/n8n-workflow-builder
+
+  version:
+    provider: mike
+    default: stable
+
+# Navigation Structure
+nav:
+  - Home: index.md
+
+  - Getting Started:
+    - Installation:
+      - NPM Installation: getting-started/installation/npm-installation.md
+      - Manual Installation: getting-started/installation/manual-installation.md
+      - Configuration Setup: getting-started/installation/configuration.md
+    - Quick Start:
+      - Claude Desktop Integration: getting-started/quick-start/claude-desktop.md
+      - First Workflow: getting-started/quick-start/first-workflow.md
+      - Verification & Testing: getting-started/quick-start/verification.md
+
+  - Features & Tools:
+    - Workflow Management: features/workflows-management.md
+    - Execution Management: features/executions-management.md
+    - Tag Management: features/tags-management.md
+    - Credential Security: features/credentials-security.md
+    - MCP Resources: features/mcp-resources.md
+    - Error Handling: features/error-handling.md
+
+  - Multi-Instance:
+    - Overview: multi-instance/overview.md
+    - Configuration: multi-instance/configuration.md
+    - Environment Manager: multi-instance/environment-manager.md
+    - Instance Routing: multi-instance/instance-routing.md
+    - Testing: multi-instance/testing.md
+    - Examples: multi-instance/examples.md
+
+  - Examples & Tutorials:
+    - Basic Examples:
+      - HTTP Webhook Workflow: examples/basic/webhook-workflow.md
+      - Scheduled Daily Report: examples/basic/scheduled-report.md
+    - Integration Examples:
+      - Slack Integration Tutorial: tutorials/integrations/slack-integration.md
+      - Email Integration Tutorial: tutorials/integrations/email-integration.md
+      - Google Sheets Tutorial: tutorials/integrations/google-sheets-integration.md
+      - PostgreSQL Tutorial: tutorials/integrations/postgresql-integration.md
+
+  - Usage Guides:
+    - Claude Desktop Patterns: guides/claude-desktop-patterns.md
+
+  - Troubleshooting:
+    - Error Reference: troubleshooting/error-reference.md
+    - Debug Mode & Logging: troubleshooting/debug-mode.md
+    - Testing Guide: troubleshooting/testing.md
+    - FAQ: troubleshooting/faq.md
+
+  - API Reference:
+    - API Architecture Overview: api/overview.md
+    - Workflows API: api/workflows-api.md
+    - Executions API: api/executions-api.md
+    - Credentials API: api/credentials-api.md
+    - Tags API: api/tags-api.md
+    - Resources & Prompts: api/resources-prompts.md
+
+  - About:
+    - Changelog: about/changelog.md
+    - Contributing: about/contributing.md
+    - Deployment: about/deployment.md
+    - License: about/license.md

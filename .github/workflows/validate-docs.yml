@@ -1,0 +1,222 @@
+name: Validate Documentation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'requirements.txt'
+      - '.github/workflows/validate-docs.yml'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git-revision-date plugin
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Validate build (strict mode)
+        id: build
+        run: |
+          echo "::group::Building documentation with strict mode"
+          mkdocs build --strict --verbose
+          echo "::endgroup::"
+
+          echo "build_status=✅ Success" >> $GITHUB_OUTPUT
+
+      - name: Check for warnings
+        id: warnings
+        run: |
+          echo "::group::Checking for build warnings"
+          WARNINGS=$(mkdocs build --strict 2>&1 | grep -i "warning" | wc -l)
+
+          if [ "$WARNINGS" -eq 0 ]; then
+            echo "warnings_status=✅ No warnings found" >> $GITHUB_OUTPUT
+            echo "No warnings detected"
+          else
+            echo "warnings_status=⚠️ $WARNINGS warning(s) found" >> $GITHUB_OUTPUT
+            echo "::warning::Found $WARNINGS warning(s) in documentation build"
+            mkdocs build --strict 2>&1 | grep -i "warning"
+          fi
+          echo "::endgroup::"
+
+      - name: Check for TODO/FIXME markers
+        id: todos
+        continue-on-error: true
+        run: |
+          echo "::group::Checking for TODO/FIXME markers"
+          TODO_COUNT=$(grep -r "TODO\|FIXME\|XXX" docs/ | wc -l || echo "0")
+
+          if [ "$TODO_COUNT" -eq 0 ]; then
+            echo "todos_status=✅ No TODO markers found" >> $GITHUB_OUTPUT
+            echo "No TODO/FIXME markers detected"
+          else
+            echo "todos_status=ℹ️ $TODO_COUNT TODO marker(s) found" >> $GITHUB_OUTPUT
+            echo "::notice::Found $TODO_COUNT TODO/FIXME marker(s) in documentation"
+            grep -rn "TODO\|FIXME\|XXX" docs/ | head -10
+          fi
+          echo "::endgroup::"
+
+      - name: Validate site size
+        id: size
+        run: |
+          echo "::group::Checking site size"
+          SITE_SIZE=$(du -sh site/ | cut -f1)
+          SITE_SIZE_BYTES=$(du -sb site/ | cut -f1)
+
+          echo "Total site size: $SITE_SIZE"
+
+          if [ "$SITE_SIZE_BYTES" -gt 52428800 ]; then
+            echo "size_status=⚠️ Site size: $SITE_SIZE (exceeds 50MB recommendation)" >> $GITHUB_OUTPUT
+            echo "::warning::Site size $SITE_SIZE exceeds 50MB recommendation"
+          else
+            echo "size_status=✅ Site size: $SITE_SIZE" >> $GITHUB_OUTPUT
+          fi
+          echo "::endgroup::"
+
+      - name: Check large files
+        id: large_files
+        run: |
+          echo "::group::Checking for large files (>200KB)"
+          LARGE_FILES=$(find site -type f -size +200k | wc -l)
+
+          if [ "$LARGE_FILES" -eq 0 ]; then
+            echo "large_files_status=✅ No large files found" >> $GITHUB_OUTPUT
+          else
+            echo "large_files_status=⚠️ $LARGE_FILES file(s) larger than 200KB" >> $GITHUB_OUTPUT
+            echo "::warning::Found $LARGE_FILES file(s) larger than 200KB"
+            echo "Largest files:"
+            find site -type f -exec du -h {} + | sort -rh | head -10
+          fi
+          echo "::endgroup::"
+
+      - name: Validate navigation structure
+        id: navigation
+        run: |
+          echo "::group::Validating navigation structure"
+
+          # Check if all files in mkdocs.yml exist
+          python3 << 'EOF'
+          import yaml
+          import os
+          import sys
+
+          with open('mkdocs.yml', 'r') as f:
+              config = yaml.safe_load(f)
+
+          missing_files = []
+
+          def check_nav_items(items, prefix=''):
+              for item in items:
+                  if isinstance(item, dict):
+                      for key, value in item.items():
+                          if isinstance(value, str):
+                              # It's a file reference
+                              file_path = os.path.join('docs', value)
+                              if not os.path.exists(file_path):
+                                  missing_files.append(value)
+                          elif isinstance(value, list):
+                              # It's a nested structure
+                              check_nav_items(value, prefix + key + ' > ')
+
+          if 'nav' in config:
+              check_nav_items(config['nav'])
+
+          if missing_files:
+              print(f"::error::Missing files referenced in navigation: {', '.join(missing_files)}")
+              sys.exit(1)
+          else:
+              print("✅ All navigation files exist")
+          EOF
+
+          echo "navigation_status=✅ Navigation structure valid" >> $GITHUB_OUTPUT
+          echo "::endgroup::"
+
+      - name: Generate validation summary
+        if: always()
+        run: |
+          echo "## Documentation Validation Summary :clipboard:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build (strict mode) | ${{ steps.build.outputs.build_status || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Warnings | ${{ steps.warnings.outputs.warnings_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| TODO markers | ${{ steps.todos.outputs.todos_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Site size | ${{ steps.size.outputs.size_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Large files | ${{ steps.large_files.outputs.large_files_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Navigation | ${{ steps.navigation.outputs.navigation_status || 'N/A' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Review validation results above" >> $GITHUB_STEP_SUMMARY
+          echo "- Fix any errors or warnings before merging" >> $GITHUB_STEP_SUMMARY
+          echo "- Consider optimizing large files if found" >> $GITHUB_STEP_SUMMARY
+          echo "- Ensure all TODO markers are addressed or documented" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ steps.build.outputs.build_status || '❌ Failed' }}';
+            const warningsStatus = '${{ steps.warnings.outputs.warnings_status || 'N/A' }}';
+            const todosStatus = '${{ steps.todos.outputs.todos_status || 'N/A' }}';
+            const sizeStatus = '${{ steps.size.outputs.size_status || 'N/A' }}';
+            const largeFilesStatus = '${{ steps.large_files.outputs.large_files_status || 'N/A' }}';
+            const navigationStatus = '${{ steps.navigation.outputs.navigation_status || 'N/A' }}';
+
+            const comment = `## Documentation Validation Results :clipboard:
+
+            ### Build Validation
+
+            | Check | Status |
+            |-------|--------|
+            | Build (strict mode) | ${buildStatus} |
+            | Warnings | ${warningsStatus} |
+            | TODO markers | ${todosStatus} |
+            | Site size | ${sizeStatus} |
+            | Large files | ${largeFilesStatus} |
+            | Navigation | ${navigationStatus} |
+
+            ### Recommendations
+
+            ${buildStatus.includes('❌') ? '- ⚠️ **Fix build errors before merging**\n' : ''}
+            ${warningsStatus.includes('⚠️') ? '- 💡 Consider addressing build warnings\n' : ''}
+            ${sizeStatus.includes('⚠️') ? '- 💡 Consider optimizing site size (currently exceeds 50MB)\n' : ''}
+            ${largeFilesStatus.includes('⚠️') ? '- 💡 Consider optimizing large files (>200KB)\n' : ''}
+            ${todosStatus.includes('ℹ️') ? '- ℹ️ TODO markers found - ensure they are documented\n' : ''}
+
+            ---
+            *This validation runs automatically on documentation changes*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

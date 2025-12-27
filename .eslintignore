@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Documentation (MkDocs)
+docs/
+site/
+
+# Test coverage
+coverage/
+
+# Temporary files
+*.log
+.env
+.config.json
