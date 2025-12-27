@@ -31,3 +31,4 @@ tsconfig.json
 # Documentation
 PR_SUMMARY.md
 NOTIFICATION_FIX_SUMMARY.md
+*.log

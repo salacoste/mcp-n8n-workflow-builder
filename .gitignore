@@ -53,3 +53,4 @@ Thumbs.db
 # Documentation (MkDocs)
 site/
 .cache/
+server.log
