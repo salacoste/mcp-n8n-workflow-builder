@@ -1,7 +1,7 @@
 {
   "name": "@kernel.salacoste/n8n-workflow-builder",
   "version": "0.9.1",
-  "description": "MCP (Model Context Protocol) server for managing n8n workflows through Claude AI and Cursor IDE",
+  "description": "AI-powered n8n workflow management via Model Context Protocol (MCP). Create, manage, and monitor workflows through natural language with Claude AI. Multi-instance support with comprehensive documentation.",
   "scripts": {
     "clean": "rm -rf build",
     "build": "tsc",
@@ -49,9 +49,16 @@
     "automation",
     "mcp",
     "claude",
+    "claude-ai",
     "cursor",
+    "cursor-ide",
     "ai",
-    "model-context-protocol"
+    "model-context-protocol",
+    "workflow-builder",
+    "natural-language",
+    "multi-instance",
+    "api-management",
+    "workflow-automation"
   ],
   "author": "IMD",
   "license": "MIT",
@@ -62,7 +69,7 @@
   "bugs": {
     "url": "https://github.com/salacoste/mcp-n8n-workflow-builder/issues"
   },
-  "homepage": "https://github.com/salacoste/mcp-n8n-workflow-builder",
+  "homepage": "https://salacoste.github.io/mcp-n8n-workflow-builder/",
   "engines": {
     "node": ">=14.0.0"
   }

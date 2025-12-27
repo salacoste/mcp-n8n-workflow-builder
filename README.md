@@ -3,6 +3,10 @@
 
 This project provides an MCP (Model Context Protocol) server for managing n8n workflows. It allows you to create, update, delete, activate, and deactivate workflows through a set of tools available in Claude AI and Cursor IDE.
 
+[![Documentation](https://img.shields.io/badge/docs-latest-blue?style=flat-square&logo=readthedocs)](https://salacoste.github.io/mcp-n8n-workflow-builder/)
+[![npm version](https://img.shields.io/npm/v/@kernel.salacoste/n8n-workflow-builder?style=flat-square&logo=npm)](https://www.npmjs.com/package/@kernel.salacoste/n8n-workflow-builder)
+[![npm downloads](https://img.shields.io/npm/dm/@kernel.salacoste/n8n-workflow-builder?style=flat-square&logo=npm)](https://www.npmjs.com/package/@kernel.salacoste/n8n-workflow-builder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 ![image](https://github.com/user-attachments/assets/6849a1de-6048-474d-8477-5f3fdb854196)
 
