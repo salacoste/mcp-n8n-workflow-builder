@@ -19,6 +19,16 @@ This project provides an MCP (Model Context Protocol) server for managing n8n wo
 
 ![image](https://github.com/user-attachments/assets/e25e86ea-882e-47c4-b822-99f56d1e7f99)
 
+## 📚 Documentation
+
+**[📖 Full Documentation Site](https://salacoste.github.io/mcp-n8n-workflow-builder/)**
+
+Comprehensive guides, API reference, examples, and troubleshooting resources:
+- [Quick Start Tutorial](https://salacoste.github.io/mcp-n8n-workflow-builder/getting-started/quick-start/first-workflow/)
+- [Installation Guide](https://salacoste.github.io/mcp-n8n-workflow-builder/getting-started/installation/npm-installation/)
+- [API Reference](https://salacoste.github.io/mcp-n8n-workflow-builder/api/overview/)
+- [Multi-Instance Setup](https://salacoste.github.io/mcp-n8n-workflow-builder/multi-instance/overview/)
+- [Troubleshooting](https://salacoste.github.io/mcp-n8n-workflow-builder/troubleshooting/faq/)
 
 ## Requirements
 
@@ -1014,6 +1024,18 @@ We're constantly working to improve n8n Workflow Builder MCP Server and make it 
 - 🤝 Pull requests with bug fixes or enhancements
 
 Your contributions help make this tool better for the entire community! 🚀
+
+---
+
+## 📖 Help & Resources
+
+**Need help or want to learn more?**
+
+- 📚 **[Full Documentation](https://salacoste.github.io/mcp-n8n-workflow-builder/)** - Comprehensive guides and API reference
+- 🚀 **[Quick Start Tutorial](https://salacoste.github.io/mcp-n8n-workflow-builder/getting-started/quick-start/first-workflow/)** - Get started in minutes
+- 🔧 **[Troubleshooting Guide](https://salacoste.github.io/mcp-n8n-workflow-builder/troubleshooting/faq/)** - Common issues and solutions
+- 💬 **[GitHub Discussions](https://github.com/salacoste/mcp-n8n-workflow-builder/discussions)** - Ask questions and share ideas
+- 🐛 **[Report Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)** - Bug reports and feature requests
 
 ---
 
