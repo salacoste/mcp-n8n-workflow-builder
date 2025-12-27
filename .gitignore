@@ -54,3 +54,4 @@ Thumbs.db
 site/
 .cache/
 server.log
+test-new-api-key.js
