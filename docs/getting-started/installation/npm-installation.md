@@ -598,7 +598,7 @@ After successful installation, proceed with:
 
 - [Manual Installation Guide](manual-installation.md) - Build from source
 - [Configuration Reference](configuration.md) - Complete configuration options
-- [Troubleshooting Guide](../../examples/troubleshooting.md) - Advanced troubleshooting
+- [Troubleshooting Guide](../../troubleshooting/error-reference.md) - Advanced troubleshooting
 - [GitHub Repository](https://github.com/salacoste/mcp-n8n-workflow-builder) - Source code and issues
 
 ---
@@ -606,6 +606,6 @@ After successful installation, proceed with:
 !!! question "Need Help?"
     If you encounter issues not covered in this guide, please:
 
-    - Check the [Troubleshooting Guide](../../examples/troubleshooting.md)
+    - Check the [Troubleshooting Guide](../../troubleshooting/error-reference.md)
     - Search [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)
     - Report a [new issue](https://github.com/salacoste/mcp-n8n-workflow-builder/issues/new)

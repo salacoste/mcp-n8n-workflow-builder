@@ -730,5 +730,5 @@ Execution #100 (failed)
 ---
 
 !!! question "Need Help?"
-    - [Examples](../examples/workflows/basic-patterns.md)
+    - [Examples](../examples/basic/webhook-workflow.md)
     - [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)

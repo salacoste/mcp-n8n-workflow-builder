@@ -187,4 +187,4 @@ update_workflow({
 ## Next Steps
 
 - [Workflows Management](workflows-management.md)
-- [Examples](../examples/workflows/basic-patterns.md)
+- [Examples](../examples/basic/webhook-workflow.md)

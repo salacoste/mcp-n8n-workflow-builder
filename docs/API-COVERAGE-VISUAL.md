@@ -205,7 +205,7 @@ Tags         [██████████████████████
 - 📄 [Детальный анализ покрытия](./API-COVERAGE-ANALYSIS.md)
 - ✅ [Checklist методов API](./API-METHODS-CHECKLIST.md)
 - 📖 [n8n API Documentation (local)](./n8n-api-docs/)
-- 🏠 [README проекта](../README.md)
+- 🏠 [Project Repository](https://github.com/salacoste/mcp-n8n-workflow-builder)
 
 ---
 

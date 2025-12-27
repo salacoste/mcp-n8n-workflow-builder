@@ -631,7 +631,6 @@ list_workflows()
 1. **Настройте аутентификацию:** Прочитайте [02-AUTHENTICATION.md](./02-AUTHENTICATION.md)
 2. **Изучите пагинацию:** Прочитайте [03-PAGINATION.md](./03-PAGINATION.md)
 3. **Начните с Workflows API:** Прочитайте [10-WORKFLOWS-API.md](./10-WORKFLOWS-API.md)
-4. **Изучите примеры:** Прочитайте [90-EXAMPLES.md](./90-EXAMPLES.md)
 
 ---
 

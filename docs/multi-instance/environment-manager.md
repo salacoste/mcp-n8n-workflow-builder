@@ -300,4 +300,4 @@ Claude: [Shows production executions]
 ---
 
 !!! info "Technical Deep Dive"
-    See [API Architecture](../api/architecture.md) for implementation details.
+    See [API Overview](../api/overview.md) for implementation details.

@@ -83,7 +83,7 @@ An MCP (Model Context Protocol) server that enables AI assistants like Claude to
 
     Install via npm and configure your first n8n instance
 
-    [:octicons-arrow-right-24: Installation Guide](getting-started/installation/npm-installation.md)
+    [:octicons-arrow-right-24: Installation Guide](../../getting-started/installation/npm-installation.md)
 
 -   :material-book-open-variant:{ .lg .middle } __Learn the Basics__
 
@@ -91,7 +91,7 @@ An MCP (Model Context Protocol) server that enables AI assistants like Claude to
 
     Create your first workflow with Claude Desktop
 
-    [:octicons-arrow-right-24: Quick Start Tutorial](getting-started/quick-start/first-workflow.md)
+    [:octicons-arrow-right-24: Quick Start Tutorial](../../getting-started/quick-start/first-workflow.md)
 
 -   :material-api:{ .lg .middle } __API Reference__
 
@@ -99,7 +99,7 @@ An MCP (Model Context Protocol) server that enables AI assistants like Claude to
 
     Complete API documentation for all 17 tools
 
-    [:octicons-arrow-right-24: API Docs](api/overview.md)
+    [:octicons-arrow-right-24: API Docs](../../api/overview.md)
 
 -   :material-help-circle:{ .lg .middle } __Examples & Tutorials__
 
@@ -107,7 +107,7 @@ An MCP (Model Context Protocol) server that enables AI assistants like Claude to
 
     Real-world workflow examples and integration guides
 
-    [:octicons-arrow-right-24: View Examples](examples/workflows/basic-patterns.md)
+    [:octicons-arrow-right-24: View Examples](../../examples/basic/webhook-workflow.md)
 
 </div>
 
@@ -186,10 +186,10 @@ Leverage 200+ n8n integrations through natural language.
 
 <div class="grid" markdown>
 
-- [Installation Guide →](getting-started/installation/npm-installation.md)
-- [Configuration Setup →](getting-started/installation/configuration.md)
-- [First Workflow →](getting-started/quick-start/first-workflow.md)
-- [API Reference →](api/overview.md)
+- [Installation Guide →](../../getting-started/installation/npm-installation.md)
+- [Configuration Setup →](../../getting-started/installation/configuration.md)
+- [First Workflow →](../../getting-started/quick-start/first-workflow.md)
+- [API Reference →](../../api/overview.md)
 
 </div>
 
@@ -201,7 +201,7 @@ Leverage 200+ n8n integrations through natural language.
 **Tested with:** n8n version 1.82.3
 **Protocol:** JSON-RPC 2.0 over stdio (MCP)
 
-[View Changelog](about/changelog.md) | [GitHub Repository](https://github.com/your-org/mcp-n8n-workflow-builder) | [Report Issues](https://github.com/your-org/mcp-n8n-workflow-builder/issues)
+[View Changelog](../../about/changelog.md) | [GitHub Repository](https://github.com/your-org/mcp-n8n-workflow-builder) | [Report Issues](https://github.com/your-org/mcp-n8n-workflow-builder/issues)
 ```
 
 #### 1.2 Getting Started Landing Page
@@ -343,10 +343,10 @@ Once configured, follow our quick start guide:
    - Create `docs/multi-instance/overview.md` - High-level multi-instance introduction
 
 4. **Epic 6 Stories → Examples & Tutorials**
-   - Story 6.1 (Workflows) → `docs/examples/workflows/basic-patterns.md`, `integrations.md`, `advanced-patterns.md`
+   - Story 6.1 (Workflows) → `docs/examples/basic/webhook-workflow.md`, `integrations.md`, `advanced-patterns.md`
    - Story 6.2 (Integrations) → `docs/examples/integrations/slack.md`, `email.md`, `google-sheets.md`, `databases.md`
    - Story 6.3 (Claude Desktop) → `docs/examples/claude-desktop-patterns.md`
-   - Story 6.4 (Troubleshooting) → `docs/examples/troubleshooting.md`
+   - Story 6.4 (Troubleshooting) → `docs/troubleshooting/error-reference.md`
 
 5. **Epic 7 Stories → API Reference**
    - Story 7.1 (Overview) → `docs/api/overview.md`, `architecture.md`
@@ -485,7 +485,7 @@ nav:
   - Examples & Tutorials:
       - Overview: examples/index.md
       - Workflow Examples:
-          - Basic Patterns: examples/workflows/basic-patterns.md
+          - Basic Patterns: examples/basic/webhook-workflow.md
           - Integration Examples: examples/workflows/integrations.md
           - Advanced Patterns: examples/workflows/advanced-patterns.md
       - Integrations:
@@ -494,7 +494,7 @@ nav:
           - Google Sheets: examples/integrations/google-sheets.md
           - Databases: examples/integrations/databases.md
       - Usage Patterns: examples/claude-desktop-patterns.md
-      - Troubleshooting: examples/troubleshooting.md
+      - Troubleshooting: troubleshooting/error-reference.md
 
   - API Reference:
       - Overview: api/overview.md

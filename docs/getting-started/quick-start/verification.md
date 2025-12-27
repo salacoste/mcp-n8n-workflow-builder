@@ -747,9 +747,9 @@ node test-mcp-tools.js
 
 After completing verification:
 
-1. **[Workflow Examples](../../examples/workflows/basic-patterns.md)** - Build real workflows
-2. **[Integration Examples](../../examples/integrations/slack.md)** - Connect services
-3. **[API Reference](../../api/workflows-api.md)** - Deep dive into all tools
+1. **[Workflow Examples](../../examples/basic/webhook-workflow.md)** - Build real workflows
+2. **[API Reference](../../api/workflows-api.md)** - Deep dive into all tools
+3. **[Features Guide](../../features/workflows-management.md)** - Explore all capabilities
 
 ---
 
@@ -757,6 +757,6 @@ After completing verification:
     If all tests pass, your installation is working correctly and you're ready to build production workflows!
 
 !!! question "Tests Failed?"
-    - Review [Troubleshooting Guide](../../examples/troubleshooting.md)
+    - Review [Troubleshooting Guide](../../troubleshooting/error-reference.md)
     - Check [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)
     - Report a [new issue](https://github.com/salacoste/mcp-n8n-workflow-builder/issues/new)

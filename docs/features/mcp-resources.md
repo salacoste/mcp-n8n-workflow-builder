@@ -342,7 +342,7 @@ that runs at 9 AM and generates a sales report
 
 - [Workflows Management](workflows-management.md) - Create workflows
 - [API Reference](../api/resources-prompts.md) - Technical details
-- [Examples](../examples/workflows/basic-patterns.md) - Workflow patterns
+- [Examples](../examples/basic/webhook-workflow.md) - Workflow patterns
 
 ---
 

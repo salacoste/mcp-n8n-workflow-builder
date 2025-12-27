@@ -550,7 +550,7 @@ await retryExecution({ id: 9876 });  // May fail if still running
 
 - [Credentials API Reference](./credentials-api.md)
 - [Tags API Reference](./tags-api.md)
-- [Debugging Guide](../troubleshooting/debugging-guide.md)
+- [Debugging Guide](../troubleshooting/debug-mode.md)
 ```
 
 ---

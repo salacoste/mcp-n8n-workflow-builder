@@ -265,7 +265,7 @@ nav:
 
   - Examples & Tutorials:
     - Workflow Examples:
-      - Basic Patterns: examples/workflows/basic-patterns.md
+      - Basic Patterns: examples/basic/webhook-workflow.md
       - Integration Examples: examples/workflows/integrations.md
       - Advanced Patterns: examples/workflows/advanced-patterns.md
     - Integrations:
@@ -274,7 +274,7 @@ nav:
       - Google Sheets: examples/integrations/google-sheets.md
       - Databases: examples/integrations/databases.md
     - Usage Patterns: examples/claude-desktop-patterns.md
-    - Troubleshooting: examples/troubleshooting.md
+    - Troubleshooting: troubleshooting/error-reference.md
 
   - API Reference:
     - Overview: api/overview.md
@@ -524,7 +524,7 @@ docs/stories/epic-5/story-5.1-multi-instance-configuration-system.md
 
 # Epic 6 stories → Examples
 docs/stories/epic-6/story-6.1-workflow-creation-examples.md
-  → docs/examples/workflows/basic-patterns.md
+  → docs/examples/basic/webhook-workflow.md
 
 # Epic 7 stories → API Reference
 docs/stories/epic-7/story-7.2-workflows-api-reference.md

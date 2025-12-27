@@ -754,7 +754,7 @@ After successful integration:
 
 1. **[First Workflow Tutorial](first-workflow.md)** - Create your first workflow with Claude
 2. **[Verification & Testing](verification.md)** - Comprehensive testing guide
-3. **[Workflow Examples](../../examples/workflows/basic-patterns.md)** - Explore workflow patterns
+3. **[Workflow Examples](../../examples/basic/webhook-workflow.md)** - Explore workflow patterns
 
 ---
 
@@ -762,7 +762,7 @@ After successful integration:
 
 - [MCP Tools Reference](../../features/workflows-management.md) - Complete tool documentation
 - [Multi-Instance Guide](../../multi-instance/configuration.md) - Advanced multi-environment setup
-- [Troubleshooting Guide](../../examples/troubleshooting.md) - Common issues and solutions
+- [Troubleshooting Guide](../../troubleshooting/error-reference.md) - Common issues and solutions
 - [Claude Desktop MCP Documentation](https://docs.anthropic.com/claude/docs/mcp) - Official MCP docs
 
 ---

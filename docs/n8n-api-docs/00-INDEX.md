@@ -51,10 +51,7 @@
   - DELETE /api/v1/tags/{id} - Удалить tag
 
 ### Дополнительные ресурсы
-- [90-EXAMPLES.md](./90-EXAMPLES.md) - Примеры использования API
-- [91-ERROR-CODES.md](./91-ERROR-CODES.md) - Коды ошибок и их обработка
-- [92-BEST-PRACTICES.md](./92-BEST-PRACTICES.md) - Лучшие практики работы с API
-- [99-CHANGELOG.md](./99-CHANGELOG.md) - История изменений API
+- [n8n API Documentation](https://docs.n8n.io/api/) - Официальная документация n8n API
 
 ---
 
@@ -236,11 +233,7 @@ docs/n8n-api-docs/
 ├── 10-WORKFLOWS-API.md         # Workflows API (полная)
 ├── 20-EXECUTIONS-API.md        # Executions API (полная)
 ├── 30-CREDENTIALS-API.md       # Credentials API (полная)
-├── 40-TAGS-API.md              # Tags API (полная)
-├── 90-EXAMPLES.md              # Примеры использования
-├── 91-ERROR-CODES.md           # Коды ошибок
-├── 92-BEST-PRACTICES.md        # Лучшие практики
-└── 99-CHANGELOG.md             # История изменений
+└── 40-TAGS-API.md              # Tags API (полная)
 ```
 
 ---
@@ -260,11 +253,8 @@ docs/n8n-api-docs/
 - Управление credentials → [30-CREDENTIALS-API.md](./30-CREDENTIALS-API.md)
 - Организация с тегами → [40-TAGS-API.md](./40-TAGS-API.md)
 
-### 4. Посмотрите примеры
-[90-EXAMPLES.md](./90-EXAMPLES.md) содержит готовые примеры для типичных задач.
-
-### 5. Обработайте ошибки
-[91-ERROR-CODES.md](./91-ERROR-CODES.md) поможет понять и обработать ошибки API.
+### 4. Изучите лучшие практики
+См. документацию по конкретным API endpoints в файлах выше для рекомендаций по использованию.
 
 ---
 

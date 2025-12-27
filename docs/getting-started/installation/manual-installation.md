@@ -862,6 +862,6 @@ After successful manual installation:
 ---
 
 !!! question "Need Help?"
-    - [Troubleshooting Guide](../../examples/troubleshooting.md)
+    - [Troubleshooting Guide](../../troubleshooting/error-reference.md)
     - [GitHub Issues](https://github.com/salacoste/mcp-n8n-workflow-builder/issues)
     - [Development Discord](#) - Coming soon!

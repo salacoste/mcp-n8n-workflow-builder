@@ -365,5 +365,5 @@
 ## 📚 Ссылки
 
 - [n8n REST API Documentation](https://docs.n8n.io/api/)
-- [MCP n8n Workflow Builder README](../README.md)
+- [MCP n8n Workflow Builder](https://github.com/salacoste/mcp-n8n-workflow-builder)
 - [n8n API Docs (local)](./n8n-api-docs/)

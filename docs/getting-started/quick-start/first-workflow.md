@@ -446,8 +446,7 @@ Add tag "[name]" to workflow [ID]
 
 ## Learning Resources
 
-- **[Workflow Examples](../../examples/workflows/basic-patterns.md)** - Common patterns
-- **[Integration Examples](../../examples/integrations/slack.md)** - Service integrations
+- **[Workflow Examples](../../examples/basic/webhook-workflow.md)** - Common patterns
 - **[API Reference](../../api/workflows-api.md)** - Complete tool documentation
 - **[n8n Documentation](https://docs.n8n.io)** - Official n8n docs
 
@@ -457,9 +456,9 @@ Add tag "[name]" to workflow [ID]
 
 Now that you've created your first workflow:
 
-1. **[Explore Examples](../../examples/workflows/basic-patterns.md)** - Try more workflow patterns
-2. **[Learn Integrations](../../examples/integrations/slack.md)** - Connect external services
-3. **[Advanced Features](../../features/workflows-management.md)** - Deep dive into all features
+1. **[Explore Examples](../../examples/basic/webhook-workflow.md)** - Try more workflow patterns
+2. **[Advanced Features](../../features/workflows-management.md)** - Deep dive into all features
+3. **[API Reference](../../api/overview.md)** - Explore all available tools
 
 ---
 

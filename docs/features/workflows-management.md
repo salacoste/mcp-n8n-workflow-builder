@@ -1020,7 +1020,7 @@ Claude: Shows next execution time based on trigger settings
 
 - **[Execution Management](executions-management.md)** - Monitor workflow runs
 - **[Tag Management](tags-management.md)** - Organize workflows
-- **[Examples](../examples/workflows/basic-patterns.md)** - Real-world patterns
+- **[Examples](../examples/basic/webhook-workflow.md)** - Real-world patterns
 - **[API Reference](../api/workflows-api.md)** - Technical specifications
 
 ---
