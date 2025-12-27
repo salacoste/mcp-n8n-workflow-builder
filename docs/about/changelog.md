@@ -5,6 +5,24 @@ All notable changes to the n8n Workflow Builder MCP Server will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2025-12-27
+
+### Documentation & Discoverability
+**Enhanced npm package metadata and documentation integration**
+
+### Changed
+- **Updated npm package description** - More comprehensive description highlighting AI-powered workflows, natural language interface, and multi-instance support
+- **Updated package homepage** - Changed from GitHub repository to documentation site (https://salacoste.github.io/mcp-n8n-workflow-builder/)
+- **Enhanced npm keywords** - Added `claude-ai`, `cursor-ide`, `natural-language`, `workflow-builder`, `multi-instance`, `api-management`, `workflow-automation` for better discoverability
+
+### Added
+- **Documentation badges** - Added professional badge section to README with documentation, npm version, downloads, and license shields
+- **GitHub Issues documentation updates** - Updated 5 GitHub Issues with links to relevant documentation sections
+
+### Improved
+- **Package discoverability** - Enhanced npm search results with better keywords and description
+- **User onboarding** - Prominent documentation links in README make it easier for new users to get started
+
 ## [Unreleased] - 2025-12-26
 
 ### Epic 2 Complete 🎉
