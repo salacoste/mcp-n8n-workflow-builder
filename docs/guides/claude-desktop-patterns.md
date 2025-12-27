@@ -689,8 +689,8 @@ Would you like me to implement these optimizations?
 
 ## Next Steps
 
-- **[Effective Conversations Guide](./effective-conversations.md)** - Advanced communication techniques
-- **[Debugging Guide](./debugging-guide.md)** - Systematic debugging workflows
+- **[First Workflow Tutorial](../getting-started/quick-start/first-workflow.md)** - Step-by-step workflow creation
+- **[Debug Mode Guide](../troubleshooting/debug-mode.md)** - Debugging and logging workflows
 - **[Multi-Instance Management](../multi-instance/overview.md)** - Managing multiple environments
 - **[Troubleshooting](../troubleshooting/faq.md)** - Common issues and solutions
 

@@ -799,7 +799,7 @@ GitHub Issues: https://github.com/your-org/mcp-n8n-workflow-builder/issues
 ## Related Documentation
 
 - [FAQ](./faq.md) - Frequently Asked Questions
-- [Debugging Guide](./debugging-guide.md) - Systematic debugging
+- [Debug Mode Guide](./debug-mode.md) - Logging and debugging workflows
 - [Claude Desktop Patterns](../guides/claude-desktop-patterns.md) - Effective usage
 - [Multi-Instance Configuration](../multi-instance/configuration.md) - Setup guide
 

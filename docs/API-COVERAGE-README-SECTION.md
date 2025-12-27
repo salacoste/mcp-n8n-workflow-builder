@@ -68,9 +68,9 @@ MCP сервер n8n-workflow-builder обеспечивает **83% покры�
 ### 📊 Детальная документация
 
 Для детального анализа покрытия API см.:
-- [API Coverage Analysis](./docs/API-COVERAGE-ANALYSIS.md) - Детальный анализ
-- [API Methods Checklist](./docs/API-METHODS-CHECKLIST.md) - Быстрый справочник
-- [API Coverage Visual](./docs/API-COVERAGE-VISUAL.md) - Визуальная сводка
-- [n8n API Documentation](./docs/n8n-api-docs/) - Локальная документация n8n API
+- [API Coverage Analysis](./API-COVERAGE-ANALYSIS.md) - Детальный анализ
+- [API Methods Checklist](./API-METHODS-CHECKLIST.md) - Быстрый справочник
+- [API Coverage Visual](./API-COVERAGE-VISUAL.md) - Визуальная сводка
+- [n8n API Documentation](./n8n-api-docs/) - Локальная документация n8n API
 
 ---

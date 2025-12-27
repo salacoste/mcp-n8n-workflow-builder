@@ -220,12 +220,12 @@ node test-workflows-validation.js
 - [Bug #4 Resolution](./STORY-2.1-BUG-4-RESOLUTION.md)
 - [Story Tracking](./stories/2.1.validate-workflows-api.md)
 
-**Code:**
-- [Test Suite](../test-workflows-validation.js)
-- [MCP Tools](../src/index.ts)
-- [API Wrapper](../src/services/n8nApiWrapper.ts)
-- [Validation](../src/utils/validation.ts)
+**Code Files:**
+- Test Suite: `test-workflows-validation.js` (project root)
+- MCP Tools: `src/index.ts`
+- API Wrapper: `src/services/n8nApiWrapper.ts`
+- Validation: `src/utils/validation.ts`
 
-**Testing:**
-- [Testing Guide](../VALIDATION-TESTING.md)
-- [Activation Test](../test-activate-methods.js)
+**Testing Resources:**
+- Testing Guide: `VALIDATION-TESTING.md` (project root)
+- Activation Test: `test-activate-methods.js` (project root)
