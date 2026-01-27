@@ -17,7 +17,6 @@ package-lock.json
 
 # Claude MCP files
 cline_mcp_settings.json
-CLAUDE.md
 AGENTS.md
 .claude/
 .agents/
