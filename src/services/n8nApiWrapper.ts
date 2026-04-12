@@ -15,6 +15,57 @@ import {
 import logger from '../utils/logger';
 import { validateWorkflowSpec, transformConnectionsToArray } from '../utils/validation';
 
+/**
+ * Validates that a mutation response (POST/PUT/PATCH) returned a single
+ * resource object with an `id`, not a list or unexpected structure.
+ *
+ * When a POST is silently redirected to GET via 301/302, the server returns
+ * a collection (e.g., `{ data: [...] }`) instead of the created resource
+ * (e.g., `{ id: "123", name: "My Workflow" }`). This function detects that.
+ *
+ * @see https://github.com/salacoste/mcp-n8n-workflow-builder/issues/13
+ */
+function assertSingleResourceResponse(
+  data: any,
+  context: string,
+  method: string = 'POST'
+): void {
+  // Check 1: Response is an array (direct list response)
+  if (Array.isArray(data)) {
+    throw new Error(
+      `${method} ${context} returned an array instead of a single resource. ` +
+      `This strongly indicates the ${method} request was silently redirected and converted to GET, ` +
+      `returning a list endpoint instead of creating/updating the resource. ` +
+      `Check your N8N_HOST configuration — it may have a trailing slash or incorrect format ` +
+      `causing an HTTP redirect. See: https://github.com/salacoste/mcp-n8n-workflow-builder/issues/13`
+    );
+  }
+
+  // Check 2: Response is a paginated list wrapper (n8n returns { data: [], nextCursor: ... })
+  if (
+    data &&
+    typeof data === 'object' &&
+    Array.isArray(data.data) &&
+    !data.id
+  ) {
+    throw new Error(
+      `${method} ${context} returned a paginated list (data[]) instead of a single resource with an id. ` +
+      `This strongly indicates the ${method} request was silently redirected and converted to GET, ` +
+      `hitting a collection endpoint. Received ${data.data.length} item(s) in the list. ` +
+      `Check your N8N_HOST configuration — it may have a trailing slash or incorrect format ` +
+      `causing an HTTP redirect. See: https://github.com/salacoste/mcp-n8n-workflow-builder/issues/13`
+    );
+  }
+
+  // Check 3: Response has no id field (malformed or unexpected)
+  if (data && typeof data === 'object' && !data.id) {
+    logger.log(
+      `WARNING: ${method} ${context} returned an object without an 'id' field. ` +
+      `Response keys: [${Object.keys(data).join(', ')}]. This may indicate a redirect issue.`
+    );
+  }
+}
+
 export class N8NApiWrapper {
   private envManager: EnvironmentManager;
 
@@ -67,6 +118,11 @@ export class N8NApiWrapper {
         logger.log(`Sending workflow data to API: ${JSON.stringify(validatedWorkflow)}`);
         
         const response = await api.post('/workflows', validatedWorkflow);
+
+        // Validate: POST should return a single workflow object with an id,
+        // not an array/list (which would indicate POST→GET redirect occurred)
+        assertSingleResourceResponse(response.data, 'creating workflow', 'POST');
+
         logger.log(`Workflow created with ID: ${response.data.id}`);
         return response.data;
       } catch (error) {
@@ -99,6 +155,10 @@ export class N8NApiWrapper {
         const validatedWorkflow = validateWorkflowSpec(workflowInput);
 
         const response = await api.put(`/workflows/${id}`, validatedWorkflow);
+
+        // Validate: PUT should return the updated workflow, not a list
+        assertSingleResourceResponse(response.data, `updating workflow ${id}`, 'PUT');
+
         logger.log(`Updated workflow: ${response.data.name}`);
         return response.data;
       } catch (error) {
@@ -116,6 +176,10 @@ export class N8NApiWrapper {
         logger.log(`Partial update fields: ${Object.keys(partialUpdate).join(', ')}`);
 
         const response = await api.patch(`/workflows/${id}`, partialUpdate);
+
+        // Validate: PATCH should return the updated workflow, not a list
+        assertSingleResourceResponse(response.data, `patching workflow ${id}`, 'PATCH');
+
         logger.log(`Patched workflow: ${response.data.name}`);
         return response.data;
       } catch (error) {
@@ -282,6 +346,10 @@ export class N8NApiWrapper {
       try {
         logger.log(`Retrying failed execution with ID: ${id}`);
         const response = await api.post(`/executions/${id}/retry`);
+
+        // Validate: POST retry should return execution data, not a list
+        assertSingleResourceResponse(response.data, `retrying execution ${id}`, 'POST');
+
         logger.log(`Retry initiated - New execution ID: ${response.data.id}`);
         return response.data;
       } catch (error) {
@@ -348,6 +416,10 @@ export class N8NApiWrapper {
       try {
         logger.log(`Creating tag: ${tag.name}`);
         const response = await api.post('/tags', tag);
+
+        // Validate: POST should return the created tag, not a list
+        assertSingleResourceResponse(response.data, 'creating tag', 'POST');
+
         logger.log(`Created tag: ${response.data.name}`);
         return response.data;
       } catch (error) {
@@ -393,6 +465,10 @@ export class N8NApiWrapper {
       try {
         logger.log(`Updating tag with ID: ${id}`);
         const response = await api.put(`/tags/${id}`, tag);
+
+        // Validate: PUT should return the updated tag, not a list
+        assertSingleResourceResponse(response.data, `updating tag ${id}`, 'PUT');
+
         logger.log(`Updated tag: ${response.data.name}`);
         return response.data;
       } catch (error) {
@@ -439,6 +515,10 @@ export class N8NApiWrapper {
       try {
         logger.log(`Creating credential: ${credential.name} (type: ${credential.type})`);
         const response = await api.post('/credentials', credential);
+
+        // Validate: POST should return the created credential, not a list
+        assertSingleResourceResponse(response.data, 'creating credential', 'POST');
+
         logger.log(`Created credential with ID: ${response.data.id}`);
         return response.data;
       } catch (error) {
