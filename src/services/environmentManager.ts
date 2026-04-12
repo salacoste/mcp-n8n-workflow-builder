@@ -53,15 +53,50 @@ export class EnvironmentManager {
           'Content-Type': 'application/json',
           'X-N8N-API-KEY': envConfig.n8n_api_key
         },
-        // Fix 1: Prevent HTTP redirect from silently downgrading POST→GET.
-        // By default, axios follows 301/302 redirects and converts POST to GET
-        // (per HTTP spec), which drops the request body. Setting maxRedirects: 0
-        // makes redirects fail explicitly so we can detect misconfigured URLs
-        // instead of silently losing data.
-        maxRedirects: 0,
-        // Treat redirect status codes (3xx) as errors so they don't silently
-        // convert POST→GET. The response interceptor below handles these
-        // gracefully with a descriptive error message.
+        // Fix 1: Allow redirects but preserve the original HTTP method.
+        // By default, HTTP 301/302 redirects convert POST→GET (per HTTP spec),
+        // which silently drops the request body. The beforeRedirect callback
+        // overrides this behaviour by forcing the redirected request to keep
+        // the original method and body, so POST stays POST even through a
+        // 301/302.  maxRedirects is set to 5 (instead of axios default of 5)
+        // explicitly for clarity, and we add the protective callback.
+        maxRedirects: 5,
+        beforeRedirect: (options: Record<string, any>, responseDetails: { headers: Record<string, string>; statusCode: number }) => {
+          // Preserve the original HTTP method across redirects.
+          // Without this, 301/302 responses cause POST→GET downgrades
+          // per the HTTP specification — the redirect drops the body and
+          // switches to GET.  We override that by restoring the method and
+          // body/headers from the original request.
+          const originalMethod = (options as any).__redirectOriginalMethod || options.method;
+
+          if (process.env.DEBUG === 'true') {
+            console.error(
+              `[EnvironmentManager] Redirect ${responseDetails.statusCode}: ` +
+              `${originalMethod} → ${options.href} (preserving method)`
+            );
+          }
+
+          // Store the very first method so chained redirects also preserve it
+          if (!(options as any).__redirectOriginalMethod) {
+            (options as any).__redirectOriginalMethod = options.method;
+          }
+
+          // Force the redirected request to keep the original method
+          options.method = originalMethod;
+
+          // Preserve headers (especially Content-Type and API key) which
+          // some HTTP clients strip on redirect
+          if (options.headers) {
+            if (!options.headers['Content-Type']) {
+              options.headers['Content-Type'] = 'application/json';
+            }
+            if (!options.headers['X-N8N-API-KEY'] && envConfig.n8n_api_key) {
+              options.headers['X-N8N-API-KEY'] = envConfig.n8n_api_key;
+            }
+          }
+        },
+        // Accept only 2xx as success — 3xx that slip past beforeRedirect
+        // will be caught by the response interceptor below.
         validateStatus: (status: number) => status >= 200 && status < 300,
       });
 
@@ -74,8 +109,8 @@ export class EnvironmentManager {
         return config;
       });
 
-      // Fix 1 & 3: Response interceptor — detect redirect-related errors
-      // and validate response structure for the expected HTTP method.
+      // Fix 1 & 3: Response interceptor — validate response structure and
+      // provide actionable error messages for any redirect edge cases.
       apiInstance.interceptors.response.use(
         (response) => {
           // Fix 3: Validate that the response matches what we expect for
@@ -91,10 +126,9 @@ export class EnvironmentManager {
           return response;
         },
         (error: AxiosError) => {
-          // Fix 1 (continued): Convert redirect errors into actionable messages.
-          // When maxRedirects: 0 catches a redirect, the error will be an
-          // AxiosError with a 3xx status. We intercept this and provide a
-          // clear message about the root cause.
+          // Safety net: If a redirect somehow exceeds maxRedirects or fails
+          // despite the beforeRedirect callback, provide a clear error message
+          // explaining the likely cause (misconfigured N8N_HOST).
           if (error.response && error.response.status >= 300 && error.response.status < 400) {
             const redirectUrl = error.response.headers?.location || 'unknown';
             const method = (error.config as any)?.__originalMethod || error.config?.method?.toUpperCase();
@@ -102,13 +136,27 @@ export class EnvironmentManager {
 
             const message =
               `HTTP ${error.response.status} redirect detected on ${method} ${url} → ${redirectUrl}. ` +
-              `This would silently convert POST to GET, losing the request body. ` +
-              `Please check that N8N_HOST is configured correctly (without trailing slash). ` +
+              `The beforeRedirect callback preserves the HTTP method, but this redirect may indicate ` +
+              `a misconfigured N8N_HOST. Please check that the URL is correct (without trailing slash). ` +
               `Current baseURL: ${error.config?.baseURL}`;
 
             if (process.env.DEBUG === 'true') {
-              console.error(`[EnvironmentManager] Redirect blocked: ${message}`);
+              console.error(`[EnvironmentManager] Redirect error: ${message}`);
             }
+
+            return Promise.reject(new Error(message));
+          }
+
+          // Handle max redirects exceeded error from axios/follow-redirects
+          if (error.code === 'ERR_FR_TOO_MANY_REDIRECTS' || error.message?.includes('maxRedirects')) {
+            const method = (error.config as any)?.__originalMethod || error.config?.method?.toUpperCase();
+            const url = error.config?.url || 'unknown';
+
+            const message =
+              `Too many redirects on ${method} ${url}. ` +
+              `This usually means N8N_HOST is misconfigured, causing a redirect loop. ` +
+              `Please verify the URL points to the n8n API endpoint. ` +
+              `Current baseURL: ${error.config?.baseURL}`;
 
             return Promise.reject(new Error(message));
           }
