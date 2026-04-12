@@ -49,9 +49,10 @@ export function normalizeBaseUrl(rawHost: string): string {
   let base = parsed.origin;
 
   // Step 4: Normalize the pathname
+  //   - Collapse consecutive slashes (e.g., `///api///v1` → `/api/v1`)
   //   - Remove trailing slashes
   //   - Remove /api/v1 suffix if already present (backward compatibility)
-  let pathname = parsed.pathname.replace(/\/+$/, '');
+  let pathname = parsed.pathname.replace(/\/{2,}/g, '/').replace(/\/+$/, '');
 
   // Remove /api/v1 variants (case-insensitive, with optional trailing components)
   pathname = pathname.replace(/\/api\/v1$/i, '');
@@ -83,6 +84,42 @@ export function normalizeRequestPath(path: string): string {
     return path;
   }
 
+  // Collapse consecutive slashes (e.g., `//workflows//` → `/workflows/`)
+  let normalized = path.replace(/\/{2,}/g, '/');
+
   // Remove trailing slashes but preserve root `/`
-  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+  normalized = normalized.length > 1 ? normalized.replace(/\/+$/, '') : normalized;
+
+  return normalized;
+}
+
+/**
+ * Checks whether a URL was modified by normalization.
+ * Useful for logging warnings when user configuration contains
+ * problematic URL formats that would cause redirects.
+ *
+ * @param original - The raw user-provided URL
+ * @param normalized - The result of normalizeBaseUrl()
+ * @returns A human-readable description of what changed, or null if no change
+ */
+export function describeUrlChanges(original: string, normalized: string): string | null {
+  if (!original || !normalized) return null;
+
+  const issues: string[] = [];
+
+  if (/\/\/$/.test(original) || /\/{2,}/.test(original.replace(/^https?:\/\//, ''))) {
+    issues.push('contained double slashes');
+  }
+  if (/\/+$/.test(original.replace(/^https?:\/\/[^/]+/, ''))) {
+    issues.push('had trailing slash(es)');
+  }
+  if (/\/api\/v1\/?$/i.test(original)) {
+    issues.push('included /api/v1 suffix (now auto-appended)');
+  }
+  if (!original.match(/^https?:\/\//i)) {
+    issues.push('missing protocol (defaulted to http://)');
+  }
+
+  if (issues.length === 0) return null;
+  return `N8N_HOST "${original}" ${issues.join(', ')}. Normalized to: ${normalized}`;
 }

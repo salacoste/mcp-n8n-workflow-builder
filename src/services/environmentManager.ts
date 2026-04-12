@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { ConfigLoader } from '../config/configLoader';
 import { N8NInstance } from '../types/config';
-import { normalizeBaseUrl } from '../utils/urlNormalization';
+import { normalizeBaseUrl, describeUrlChanges } from '../utils/urlNormalization';
 import { validateApiResponse } from '../utils/responseValidation';
 
 export class EnvironmentManager {
@@ -39,6 +39,13 @@ export class EnvironmentManager {
       // baseURL regardless of user input format (trailing slashes, /api/v1 suffix, etc.)
       // This prevents HTTP redirects caused by URL format mismatches.
       const baseURL = normalizeBaseUrl(envConfig.n8n_host);
+
+      // Log a warning when the URL required normalization — this helps users
+      // discover misconfigured N8N_HOST values that would cause redirects.
+      const urlChangeDescription = describeUrlChanges(envConfig.n8n_host, baseURL);
+      if (urlChangeDescription) {
+        console.error(`[EnvironmentManager] WARNING: ${urlChangeDescription}`);
+      }
 
       // Debug logging for transparency (only when DEBUG=true)
       if (process.env.DEBUG === 'true') {
