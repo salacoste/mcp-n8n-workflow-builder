@@ -68,31 +68,43 @@ export class EnvironmentManager {
         // 301/302.  maxRedirects is set to 5 (instead of axios default of 5)
         // explicitly for clarity, and we add the protective callback.
         maxRedirects: 5,
-        beforeRedirect: (options: Record<string, any>, responseDetails: { headers: Record<string, string>; statusCode: number }) => {
+        beforeRedirect: (
+          options: Record<string, any>,
+          responseDetails: { headers: Record<string, string>; statusCode: number },
+          requestDetails: { url: string; method: string; headers: Record<string, string> }
+        ) => {
           // Preserve the original HTTP method across redirects.
           // Without this, 301/302 responses cause POST→GET downgrades
           // per the HTTP specification — the redirect drops the body and
-          // switches to GET.  We override that by restoring the method and
-          // body/headers from the original request.
-          const originalMethod = (options as any).__redirectOriginalMethod || options.method;
+          // switches to GET.
+          //
+          // IMPORTANT: By the time beforeRedirect fires, follow-redirects has
+          // ALREADY mutated `options.method` to "GET" for 301/302 status codes.
+          // The *unmutated* original method is available in `requestDetails.method`
+          // (the 3rd callback parameter), which captures the method before the
+          // POST→GET conversion.  We also store it in `__redirectOriginalMethod`
+          // so chained redirects preserve the very first method.
+          const originalMethod =
+            (options as any).__redirectOriginalMethod || requestDetails.method;
 
           if (process.env.DEBUG === 'true') {
             console.error(
               `[EnvironmentManager] Redirect ${responseDetails.statusCode}: ` +
-              `${originalMethod} → ${options.href} (preserving method)`
+              `${originalMethod} → ${options.href} (preserving method, ` +
+              `was downgraded to ${options.method})`
             );
           }
 
           // Store the very first method so chained redirects also preserve it
           if (!(options as any).__redirectOriginalMethod) {
-            (options as any).__redirectOriginalMethod = options.method;
+            (options as any).__redirectOriginalMethod = requestDetails.method;
           }
 
           // Force the redirected request to keep the original method
           options.method = originalMethod;
 
           // Preserve headers (especially Content-Type and API key) which
-          // some HTTP clients strip on redirect
+          // follow-redirects strips on POST→GET downgrade
           if (options.headers) {
             if (!options.headers['Content-Type']) {
               options.headers['Content-Type'] = 'application/json';
