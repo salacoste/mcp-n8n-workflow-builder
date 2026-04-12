@@ -72,28 +72,6 @@ export function normalizeBaseUrl(rawHost: string): string {
 }
 
 /**
- * Normalizes a request path to prevent trailing-slash redirects.
- * Some HTTP servers redirect `/api/v1/workflows/` → `/api/v1/workflows`
- * via 301, which can cause POST→GET downgrades.
- *
- * @param path - The request path (e.g., `/workflows/`)
- * @returns The path without a trailing slash
- */
-export function normalizeRequestPath(path: string): string {
-  if (!path || typeof path !== 'string') {
-    return path;
-  }
-
-  // Collapse consecutive slashes (e.g., `//workflows//` → `/workflows/`)
-  let normalized = path.replace(/\/{2,}/g, '/');
-
-  // Remove trailing slashes but preserve root `/`
-  normalized = normalized.length > 1 ? normalized.replace(/\/+$/, '') : normalized;
-
-  return normalized;
-}
-
-/**
  * Checks whether a URL was modified by normalization.
  * Useful for logging warnings when user configuration contains
  * problematic URL formats that would cause redirects.
