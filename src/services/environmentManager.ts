@@ -1,6 +1,8 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 import { ConfigLoader } from '../config/configLoader';
 import { N8NInstance } from '../types/config';
+import { normalizeBaseUrl } from '../utils/urlNormalization';
+import { validateApiResponse } from '../utils/responseValidation';
 
 export class EnvironmentManager {
   private static instance: EnvironmentManager;
@@ -33,21 +35,10 @@ export class EnvironmentManager {
       // No cached instance - create new one with URL normalization
       const envConfig = this.configLoader.getEnvironmentConfig(instanceSlug);
 
-      // URL Normalization: Ensure consistent baseURL regardless of user input format
-      // This provides backward compatibility with configs that include /api/v1
-      let baseHost = envConfig.n8n_host;
-
-      // Step 1: Remove all trailing slashes
-      baseHost = baseHost.replace(/\/+$/, '');
-
-      // Step 2: Remove /api/v1 if already present (backward compatibility)
-      // This handles both legacy configs and new configs
-      if (baseHost.endsWith('/api/v1')) {
-        baseHost = baseHost.replace(/\/api\/v1$/, '');
-      }
-
-      // Step 3: Now safely construct the final URL with /api/v1
-      const baseURL = `${baseHost}/api/v1`;
+      // Fix 2: URL Normalization — use dedicated utility to ensure consistent
+      // baseURL regardless of user input format (trailing slashes, /api/v1 suffix, etc.)
+      // This prevents HTTP redirects caused by URL format mismatches.
+      const baseURL = normalizeBaseUrl(envConfig.n8n_host);
 
       // Debug logging for transparency (only when DEBUG=true)
       if (process.env.DEBUG === 'true') {
@@ -61,8 +52,70 @@ export class EnvironmentManager {
         headers: {
           'Content-Type': 'application/json',
           'X-N8N-API-KEY': envConfig.n8n_api_key
-        }
+        },
+        // Fix 1: Prevent HTTP redirect from silently downgrading POST→GET.
+        // By default, axios follows 301/302 redirects and converts POST to GET
+        // (per HTTP spec), which drops the request body. Setting maxRedirects: 0
+        // makes redirects fail explicitly so we can detect misconfigured URLs
+        // instead of silently losing data.
+        maxRedirects: 0,
+        // Treat redirect status codes (3xx) as errors so they don't silently
+        // convert POST→GET. The response interceptor below handles these
+        // gracefully with a descriptive error message.
+        validateStatus: (status: number) => status >= 200 && status < 300,
       });
+
+      // Fix 1 (continued): Request interceptor — tag every outgoing request
+      // with its original HTTP method so we can detect POST→GET downgrades
+      // if a redirect somehow slips through.
+      apiInstance.interceptors.request.use((config) => {
+        // Store original method for redirect detection
+        (config as any).__originalMethod = config.method?.toUpperCase();
+        return config;
+      });
+
+      // Fix 1 & 3: Response interceptor — detect redirect-related errors
+      // and validate response structure for the expected HTTP method.
+      apiInstance.interceptors.response.use(
+        (response) => {
+          // Fix 3: Validate that the response matches what we expect for
+          // the original request method (e.g., POST should return created
+          // resource, not an HTML page or empty body from a GET redirect).
+          const originalMethod = (response.config as any).__originalMethod;
+          const validationError = validateApiResponse(response, originalMethod);
+          if (validationError) {
+            if (process.env.DEBUG === 'true') {
+              console.error(`[EnvironmentManager] Response validation warning: ${validationError}`);
+            }
+          }
+          return response;
+        },
+        (error: AxiosError) => {
+          // Fix 1 (continued): Convert redirect errors into actionable messages.
+          // When maxRedirects: 0 catches a redirect, the error will be an
+          // AxiosError with a 3xx status. We intercept this and provide a
+          // clear message about the root cause.
+          if (error.response && error.response.status >= 300 && error.response.status < 400) {
+            const redirectUrl = error.response.headers?.location || 'unknown';
+            const method = (error.config as any)?.__originalMethod || error.config?.method?.toUpperCase();
+            const url = error.config?.url || 'unknown';
+
+            const message =
+              `HTTP ${error.response.status} redirect detected on ${method} ${url} → ${redirectUrl}. ` +
+              `This would silently convert POST to GET, losing the request body. ` +
+              `Please check that N8N_HOST is configured correctly (without trailing slash). ` +
+              `Current baseURL: ${error.config?.baseURL}`;
+
+            if (process.env.DEBUG === 'true') {
+              console.error(`[EnvironmentManager] Redirect blocked: ${message}`);
+            }
+
+            return Promise.reject(new Error(message));
+          }
+
+          return Promise.reject(error);
+        }
+      );
 
       // Cache the instance
       this.apiInstances.set(targetEnv, apiInstance);
