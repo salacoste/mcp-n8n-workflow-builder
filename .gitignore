@@ -17,7 +17,6 @@ package-lock.json
 
 # Claude MCP files
 cline_mcp_settings.json
-CLAUDE.md
 AGENTS.md
 .claude/
 .agents/
@@ -53,5 +52,19 @@ Thumbs.db
 # Documentation (MkDocs)
 site/
 .cache/
+
+# Test scripts (may load local secrets)
+test-*.js
+cleanup-*.js
+debug-*.js
 server.log
-test-new-api-key.js
+
+# Additional secret patterns
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+credentials.json
+**/secrets/
+**/credentials/
